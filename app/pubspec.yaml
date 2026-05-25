@@ -1,0 +1,44 @@
+name: miner_enterprises
+description: "A new Flutter project."
+publish_to: 'none'
+version: 0.1.0+1
+
+environment:
+  sdk: ^3.11.3
+
+dependencies:
+  flutter:
+    sdk: flutter
+
+  firebase_core: ^3.15.2
+  firebase_auth: ^5.7.0
+  cloud_firestore: ^5.6.12
+  firebase_storage: ^12.4.10
+  dropdown_button2: ^2.3.9
+  file_picker: ^8.0.0
+  http: ^1.2.0
+  table_calendar: ^3.2.0
+  intl: 0.20.2
+  flutter_dotenv: ^6.0.1
+  url_launcher: ^6.3.2
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^6.0.0
+
+flutter:
+  uses-material-design: true
+
+  assets:
+    - assets/images/
+    - .env
+
+  fonts:
+    - family: Changa One
+      fonts:
+        - asset: assets/fonts/ChangaOne-Regular.ttf
+
+    - family: Arimo
+      fonts:
+        - asset: assets/fonts/Arimo-VariableFont_wght.ttf

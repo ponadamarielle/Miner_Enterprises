@@ -1,0 +1,48 @@
+{
+  "project_info": {
+    "project_number": "943437475852",
+    "project_id": "miner-enterprises",
+    "storage_bucket": "miner-enterprises.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:943437475852:android:b5f4c051905b1d3af1fe29",
+        "android_client_info": {
+          "package_name": "com.example.miner_enterprises"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyB8ZVA_3P3gHLZ7JS-_8o051KQVQ3dIYK4"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:943437475852:android:b6ad759788cbaf47f1fe29",
+        "android_client_info": {
+          "package_name": "com.miner.enterprises"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyB8ZVA_3P3gHLZ7JS-_8o051KQVQ3dIYK4"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
