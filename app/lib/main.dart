@@ -1,9 +1,11 @@
-import 'package:flutter/material.dart';
+import 'package:flutter/material.dart' hide Feedback;
 import 'package:firebase_core/firebase_core.dart';
-import 'package:miner_enterprises/customer.dart';
-import 'firebase_options.dart';
-import 'package:miner_enterprises/login.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'firebase_options.dart';
+
+import 'package:miner_enterprises/customer.dart';
+import 'package:miner_enterprises/login.dart';
+import 'package:miner_enterprises/adminpages/feedback.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -19,9 +21,28 @@ class MainApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return const MaterialApp(
+    return MaterialApp( 
       debugShowCheckedModeBanner: false,
-      home: RoleSelector(), 
+      
+      onGenerateRoute: (settings) {
+        if (settings.name != null && settings.name!.startsWith('/feedback')) {
+
+          final Uri uri = Uri.parse(settings.name!);
+          final String requestId = uri.queryParameters['reqId'] ?? 'Unknown';
+          final String techId = uri.queryParameters['techId'] ?? 'Unknown';
+
+          return MaterialPageRoute(
+            builder: (context) => Feedback(
+              requestId: requestId,
+              technicianId: techId,
+            ),
+          );
+        }
+
+        return null; 
+      },
+
+      home: const RoleSelector(), 
     );
   }
 }

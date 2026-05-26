@@ -266,6 +266,7 @@ class _ServicesState extends State<Services> with WidgetsBindingObserver {
       "acType": iSelectedType,
       "productName": iSelectedProduct,
       "productPrice": iSelectedPrice,
+      "serviceFee": installationFee,
       "totalPrice": iSelectedPrice + installationFee,
 
       "date": Timestamp.fromDate(
@@ -344,11 +345,10 @@ Future<void> submitRepairRequest() async {
 
       "acType": rSelectedType,
       "productName": rSelectedProduct,
+      "serviceFee": repairFee,
       "totalPrice": repairFee,
 
-      "date": Timestamp.fromDate(
-        DateFormat("MM/dd/yyyy").parse(rDateController.text),
-      ),
+      "date": Timestamp.fromDate(DateFormat("MM/dd/yyyy").parse(rDateController.text)),
       "time": rSelectedTime,
 
       "address": rAddressController.text.trim(),

@@ -141,6 +141,25 @@ class _ServiceRequestState extends State<ServiceRequest> {
       try {
         final backendUrl = 'http://localhost:8080/email/approve';
 
+        final counterRef = firestore.collection('counters').doc('service_requests');
+        int receiptNumber = 1;
+        await firestore.runTransaction((transaction) async {
+          final snap = await transaction.get(counterRef);
+          if (snap.exists) {
+            receiptNumber = (snap.data()?['count'] ?? 0) + 1;
+          }
+          transaction.set(counterRef, {'count': receiptNumber}, SetOptions(merge: true));
+        });
+
+        final List<Map<String, dynamic>> serviceItems = [
+          {
+            'serviceType': _selectedEvent?['serviceType'] ?? '',
+            'productName': _selectedEvent?['productName'] ?? '',
+            'productPrice': _selectedEvent?['productPrice'] ?? 0,
+            'description': _selectedEvent?['description'] ?? '',
+          }
+        ];
+
         await http.post(
           Uri.parse(backendUrl),
           headers: {'Content-Type': 'application/json'},
@@ -148,15 +167,18 @@ class _ServiceRequestState extends State<ServiceRequest> {
             'requestId': _selectedEvent?['requestId'],
             'name': _selectedEvent?['name'],
             'email': _selectedEvent?['email'],
-            'date': DateFormat('MMMM d, yyyy')
-                .format((_selectedEvent!['date'] as Timestamp).toDate()),
+            'address': _selectedEvent?['address'] ?? '',
+            'date': DateFormat('MM-dd-yyyy').format((_selectedEvent!['date'] as Timestamp).toDate()),
             'time': _selectedEvent?['time'],
             'technicianName': _selectedEvent?['technicianName'],
             'serviceType': _selectedEvent?['serviceType'] ?? '',
-            'totalPrice': _selectedEvent?['totalPrice'] ?? 0,
+            'productName': _selectedEvent?['productName'] ?? '',
+            'productPrice': _selectedEvent?['productPrice'] ?? 0,
             'paymentMethod': _selectedEvent?['paymentMethod'] ?? '',
             'paymentStatus': _selectedEvent?['paymentStatus'] ?? 'Unpaid',
             'xenditChargeId': _selectedEvent?['xenditChargeId'] ?? 'N/A',
+            'receiptNumber': receiptNumber,
+            'serviceItems': serviceItems
           }),
         );
         print("Approval email triggered successfully.");
@@ -191,13 +213,30 @@ class _ServiceRequestState extends State<ServiceRequest> {
       'completedAt': FieldValue.serverTimestamp(),
     });
 
-    try {
+  try {
+      final List<Map<String, dynamic>> serviceItems = [
+        {
+          'serviceType': eventData['serviceType'] ?? '',
+          'productName': eventData['productName'] ?? '',
+          'productPrice': eventData['productPrice'] ?? 0,
+          'description': eventData['description'] ?? '',
+        }
+      ];
+
       await http.post(
         Uri.parse('http://localhost:8080/email/feedback'),
         headers: {'Content-Type': 'application/json'},
         body: jsonEncode({
           'email': eventData['email'],
           'requestId': eventData['requestId'],
+          'technicianId': eventData['technicianId'],
+          'name': eventData['name'],
+          'address': eventData['address'] ?? '',
+          'date': eventData['date'] != null ? DateFormat('MM-dd-yyyy').format((eventData['date'] as Timestamp).toDate()): '',
+          'paymentMethod': eventData['paymentMethod'] ?? '',
+          'serviceFee': eventData['serviceFee'] ?? 0,
+          'totalPrice': eventData['totalPrice'] ?? 0,
+          'serviceItems': serviceItems,
         }),
       );
     } catch (e) {
@@ -346,14 +385,7 @@ class _ServiceRequestState extends State<ServiceRequest> {
                     color: getChipColor(e['technicianId'] ?? ''),
                     borderRadius: BorderRadius.circular(8),
                   ),
-                  child: Text(
-                    "${e['name'] ?? ''} - ${e['time'] ?? ''} ${techName}",
-                    style: TextStyle(
-                      color: getTextColor(e['technicianId'] ?? ''),
-                      fontSize: 12,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
+                  child: Text("${e['name'] ?? ''} - ${e['time'] ?? ''} ${techName}", style: TextStyle(color: getTextColor(e['technicianId'] ?? ''), fontSize: 12, fontWeight: FontWeight.w600)),
                 ),
               );
             },
@@ -397,7 +429,7 @@ class _ServiceRequestState extends State<ServiceRequest> {
           Expanded(
             child: LayoutBuilder(
               builder: (context, constraints) {
-                const chipHeight = 22.0;
+                const chipHeight = 15.0;
                 const chipSpacing = 2.0;
                 final maxChips = 2;
                 final safeMaxChips = maxChips < 1 ? 1 : maxChips;
@@ -435,7 +467,7 @@ class _ServiceRequestState extends State<ServiceRequest> {
                             _showAllEventsDialog(context, day, dayEvents),
                         child: Text("+$overflow more",
                             style: TextStyle(
-                                fontSize: 9,
+                                fontSize: 8,
                                 color: Colors.grey.shade600,
                                 fontWeight: FontWeight.w500)),
                       ),
@@ -454,10 +486,112 @@ class _ServiceRequestState extends State<ServiceRequest> {
     return Scaffold(
       backgroundColor: Color(0xFFF5F6FA),
       body: Padding(
-        padding: EdgeInsets.symmetric(horizontal: 40, vertical: 20),
+        padding: EdgeInsets.symmetric(horizontal: 20, vertical: 5),
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
+            Expanded(
+              flex: 1,
+              child: Container(
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Padding(
+                  padding: EdgeInsets.all(20),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text("List View", style: TextStyle(fontSize: 18, fontFamily: "Arimo", fontWeight: FontWeight.bold)),
+                      SizedBox(height: 15),
+                      Expanded(
+                        child: Builder(
+                          builder: (context) {
+                            List<Map<String, dynamic>> allEvents = [];
+                            for (var dayEvents in events.values) {
+                              allEvents.addAll(dayEvents);
+                            }
+
+                            allEvents.sort((a, b) {
+                              DateTime dateA = (a['date'] as Timestamp).toDate();
+                              DateTime dateB = (b['date'] as Timestamp).toDate();
+                              return dateA.compareTo(dateB); 
+                            });
+
+                            if (allEvents.isEmpty) {
+                              return Center(
+                                child: Text("No requests found.", style: TextStyle(fontFamily: "Arimo", color: Colors.grey)),
+                              );
+                            }
+
+                            return ListView.separated(
+                              itemCount: allEvents.length,
+                              separatorBuilder: (_, __) => Divider(color: Colors.grey.shade200, height: 1),
+                              itemBuilder: (context, index) {
+                                final e = allEvents[index];
+                                final date = (e['date'] as Timestamp).toDate();
+                                final isSelected = _selectedEvent?['docId'] == e['docId'];
+                                
+                                return ListTile(
+                                  contentPadding: EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                                  tileColor: isSelected ? Color(0xFFF5F6FA) : Colors.transparent,
+                                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                                  title: Text(
+                                    e['name'] ?? 'Unknown Client',
+                                    style: TextStyle(
+                                      fontFamily: "Arimo", 
+                                      fontWeight: FontWeight.bold, 
+                                      fontSize: 14, 
+                                      color: isSelected ? Color(0xFF013B7A) : Colors.black
+                                    ),
+                                  ),
+                                  subtitle: Padding(
+                                    padding: const EdgeInsets.only(top: 4.0),
+                                    child: Column(
+                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      children: [
+                                        Text("${DateFormat('MMM d, yyyy').format(date)} • ${e['time'] ?? ''}", style: TextStyle(fontFamily: "Arimo", fontSize: 12)),
+                                        Text("${e['serviceType'] ?? ''}", style: TextStyle(fontFamily: "Arimo", fontSize: 11, color: Colors.grey.shade700)),
+                                      ],
+                                    ),
+                                  ),
+                                  trailing: Container(
+                                    padding: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                                    decoration: BoxDecoration(
+                                      color: getStatusColor(e['status'] ?? 'Pending').withValues(alpha: 0.1),
+                                      borderRadius: BorderRadius.circular(6),
+                                    ),
+                                    child: Text(
+                                      e['status'] ?? 'Pending',
+                                      style: TextStyle(
+                                        color: getStatusColor(e['status'] ?? 'Pending'),
+                                        fontSize: 10,
+                                        fontWeight: FontWeight.bold,
+                                        fontFamily: "Arimo"
+                                      ),
+                                    ),
+                                  ),
+                                  onTap: () {
+                                    setState(() {
+                                      _selectedDay = date;
+                                      _focusedDay = date; 
+                                      _selectedEvent = e;
+                                    });
+                                  },
+                                );
+                              },
+                            );
+                          },
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+
+            SizedBox(width: 20),
+
             Expanded(
               flex: 3,
               child: Column(
@@ -468,7 +602,7 @@ class _ServiceRequestState extends State<ServiceRequest> {
                     crossAxisAlignment: CrossAxisAlignment.center,
                     children: [
                       Text("View and manage all service request", style: TextStyle(fontSize: 15, fontFamily: "Arimo")),
-                      SizedBox(width: 715),
+                      SizedBox(width: 515),
                       Container(
                           width: 100,
                           height: 40,
@@ -493,7 +627,7 @@ class _ServiceRequestState extends State<ServiceRequest> {
                         ),
                         lastDay: DateTime.utc(2100, 12, 31),
                         focusedDay: _focusedDay,
-                        rowHeight: 78,
+                        rowHeight: 83,
                         daysOfWeekHeight: 28,
                         selectedDayPredicate: (day) =>
                             isSameDay(_selectedDay, day),
@@ -552,7 +686,7 @@ class _ServiceRequestState extends State<ServiceRequest> {
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: Padding(
-                  padding: EdgeInsets.only(left: 40, top: 25, right: 40, bottom: 25),
+                  padding: EdgeInsets.only(left: 25, top: 25, right: 5, bottom: 15),
                   child: _selectedEvent == null
                       ? Container(
                           alignment: Alignment.center,
@@ -571,7 +705,7 @@ class _ServiceRequestState extends State<ServiceRequest> {
                               )),
                               SizedBox(height: 15),
                               Padding(
-                                padding: EdgeInsets.only(left: 20),
+                                padding: EdgeInsets.only(left: 10),
                                 child: Row(
                                   crossAxisAlignment: CrossAxisAlignment.center,
                                   children: [
@@ -590,7 +724,7 @@ class _ServiceRequestState extends State<ServiceRequest> {
                               ),
                               SizedBox(height: 10),
                               Padding(
-                                padding: EdgeInsets.only(left: 20),
+                                padding: EdgeInsets.only(left: 10),
                                 child: Row(
                                   crossAxisAlignment: CrossAxisAlignment.center,
                                   children: [
@@ -608,7 +742,7 @@ class _ServiceRequestState extends State<ServiceRequest> {
                               ),
                               SizedBox(height: 10),
                               Padding(
-                                padding: EdgeInsets.only(left: 20),
+                                padding: EdgeInsets.only(left: 10),
                                 child: Row(
                                   crossAxisAlignment: CrossAxisAlignment.center,
                                   children: [
@@ -632,7 +766,7 @@ class _ServiceRequestState extends State<ServiceRequest> {
                               ),
                               SizedBox(height: 10),
                               Padding(
-                                padding: EdgeInsets.only(left: 20),
+                                padding: EdgeInsets.only(left: 10),
                                 child: Row(
                                   crossAxisAlignment: CrossAxisAlignment.center,
                                   children: [
@@ -656,7 +790,7 @@ class _ServiceRequestState extends State<ServiceRequest> {
                               ),
                               SizedBox(height: 10),
                               Padding(
-                                padding: EdgeInsets.only(left: 20),
+                                padding: EdgeInsets.only(left: 10),
                                 child: Row(
                                   crossAxisAlignment: CrossAxisAlignment.center,
                                   children: [
@@ -679,7 +813,7 @@ class _ServiceRequestState extends State<ServiceRequest> {
                               ),
                               SizedBox(height: 10),
                               Padding(
-                                padding: EdgeInsets.only(left: 20),
+                                padding: EdgeInsets.only(left: 10),
                                 child: Row(
                                   crossAxisAlignment: CrossAxisAlignment.center,
                                   children: [
@@ -697,7 +831,7 @@ class _ServiceRequestState extends State<ServiceRequest> {
                               ),
                               SizedBox(height: 10),
                               Padding(
-                                padding: EdgeInsets.only(left: 20),
+                                padding: EdgeInsets.only(left: 10),
                                 child: Row(
                                   crossAxisAlignment: CrossAxisAlignment.center,
                                   children: [
@@ -715,7 +849,7 @@ class _ServiceRequestState extends State<ServiceRequest> {
                               ),
                               SizedBox(height: 10),
                               Padding(
-                                padding: EdgeInsets.only(left: 20),
+                                padding: EdgeInsets.only(left: 10),
                                 child: Row(
                                   crossAxisAlignment: CrossAxisAlignment.center,
                                   children: [
@@ -755,7 +889,7 @@ class _ServiceRequestState extends State<ServiceRequest> {
                               ),
                               SizedBox(height: 10),
                               Padding(
-                                padding: EdgeInsets.only(left: 20),
+                                padding: EdgeInsets.only(left: 10),
                                 child: Row(
                                   crossAxisAlignment: CrossAxisAlignment.center,
                                   children: [
@@ -779,7 +913,7 @@ class _ServiceRequestState extends State<ServiceRequest> {
                               ),
                               SizedBox(height: 10),
                               Padding(
-                                padding: EdgeInsets.only(left: 20),
+                                padding: EdgeInsets.only(left: 10),
                                 child: Row(
                                   crossAxisAlignment: CrossAxisAlignment.center,
                                   children: [
@@ -804,7 +938,7 @@ class _ServiceRequestState extends State<ServiceRequest> {
                               ),
                               SizedBox(height: 10),
                               Padding(
-                                padding: EdgeInsets.only(left: 20),
+                                padding: EdgeInsets.only(left: 10),
                                 child: Row(
                                   crossAxisAlignment: CrossAxisAlignment.center,
                                   children: [
@@ -833,7 +967,7 @@ class _ServiceRequestState extends State<ServiceRequest> {
                               ),
                               SizedBox(height: 10),
                               Padding(
-                                padding: EdgeInsets.only(left: 20),
+                                padding: EdgeInsets.only(left: 10),
                                 child: Row(
                                   crossAxisAlignment: CrossAxisAlignment.center,
                                   children: [
@@ -851,7 +985,7 @@ class _ServiceRequestState extends State<ServiceRequest> {
                               ),
                               SizedBox(height: 20),
                               Padding(
-                                padding: EdgeInsets.symmetric(horizontal: 20),
+                                padding: EdgeInsets.symmetric(horizontal: 10),
                                 child: Column(
                                   children: [
                                     Builder(
@@ -913,7 +1047,7 @@ class _ServiceRequestState extends State<ServiceRequest> {
                                             child: ElevatedButton(
                                               onPressed: null,
                                               style: ElevatedButton.styleFrom(
-                                                padding: EdgeInsets.symmetric(horizontal: 27, vertical: 15),
+                                                padding: EdgeInsets.symmetric(horizontal: 24, vertical: 15),
                                                 tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                                                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                                                 disabledBackgroundColor: Colors.grey.shade300,
@@ -980,7 +1114,7 @@ class _ServiceRequestState extends State<ServiceRequest> {
                                                   }
                                                 : null,
                                             style: OutlinedButton.styleFrom(
-                                              padding: EdgeInsets.symmetric(horizontal: 27, vertical: 15),
+                                              padding: EdgeInsets.symmetric(horizontal: 24, vertical: 15),
                                               tapTargetSize:MaterialTapTargetSize.shrinkWrap,
                                               side: BorderSide(color: canCancel ? Color(0xFFDC342C): Colors.grey.shade400, width: 1.5),
                                               shape: RoundedRectangleBorder(

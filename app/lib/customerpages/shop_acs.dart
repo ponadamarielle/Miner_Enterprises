@@ -894,6 +894,7 @@ class _InstallationFormDialogState extends State<_InstallationFormDialog> with W
           "acType": selectedProductData['type'],
           "productName": iSelectedProduct,
           "productPrice": iSelectedPrice,
+          "serviceFee": installationFee,
           "totalPrice": iSelectedPrice + installationFee,
           "date": Timestamp.fromDate(pickedDate),
           "time": iSelectedTime,
