@@ -46,6 +46,7 @@ class _FeedbackState extends State<Feedback> {
       });
     } catch (e) {
       setState(() => _isSubmitting = false);
+      if (!mounted) return; 
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text("Failed to submit feedback: $e")),
       );

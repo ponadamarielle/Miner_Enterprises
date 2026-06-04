@@ -277,7 +277,9 @@ Future<Map<String, dynamic>> _fetchDocumentFromFirestore(String requestId) async
         };
       }
     }
-  } catch (e) {}
+  } catch (e) {
+    print('Error fetching document: $e');
+  }
   return empty;
 }
 

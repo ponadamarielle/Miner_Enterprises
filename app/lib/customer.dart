@@ -4,6 +4,8 @@ import 'package:miner_enterprises/customerpages/services.dart';
 import 'package:miner_enterprises/customerpages/shop_acs.dart';
 
 class Customer extends StatefulWidget {
+  const Customer({super.key});
+
   @override
   State<Customer> createState() => _CustomerState();
 }

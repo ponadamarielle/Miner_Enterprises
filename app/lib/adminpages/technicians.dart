@@ -117,13 +117,14 @@ void _addTechnicianDialog() {
 
           ElevatedButton(
             onPressed: () async {
+              final nav = Navigator.of(context);
               if (formKey.currentState!.validate()) {
                 await _saveTechnician(
                   nameController.text,
                   mobileNumController.text,
                 );
 
-                Navigator.pop(context);
+                nav.pop();
               }
             },
             style: ElevatedButton.styleFrom(backgroundColor: Colors.white, elevation: 8),
@@ -288,6 +289,7 @@ void _editDialog(QueryDocumentSnapshot doc) {
 
           ElevatedButton(
             onPressed: () async {
+              final nav = Navigator.of(context);
               await FirebaseFirestore.instance
                   .collection('technicians')
                   .doc(doc.id)
@@ -296,7 +298,7 @@ void _editDialog(QueryDocumentSnapshot doc) {
                 'mobileNumber': mobileNumController.text,
               });
 
-              Navigator.pop(context);
+              nav.pop();
             },
             style: ElevatedButton.styleFrom(backgroundColor: Colors.white, elevation: 8),
             child: Text(
@@ -342,6 +344,7 @@ void _deactivateDialog(String id) {
 
         TextButton(
           onPressed: () async {
+            final nav = Navigator.of(context);
             await FirebaseFirestore.instance
                 .collection('technicians')
                 .doc(id)
@@ -349,7 +352,7 @@ void _deactivateDialog(String id) {
               'isActive': false,
             });
 
-            Navigator.pop(context);
+            nav.pop();
           },
           child: Text("Yes", style: TextStyle(color: Color(0xFF013b7a), fontWeight: FontWeight.w700),
           ),
@@ -365,7 +368,7 @@ void _deactivateDialog(String id) {
       backgroundColor: Color(0xFFF8F8F8),
 
       body: Padding(
-        padding: EdgeInsets.symmetric(horizontal: 80, vertical: 50),
+        padding: EdgeInsets.symmetric(horizontal: 40, vertical: 50),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [

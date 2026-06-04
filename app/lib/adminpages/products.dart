@@ -375,6 +375,7 @@ Future<String?> _uploadImage(Uint8List imageBytes, String fileName) async {
                   onPressed: isUploading
                       ? null
                       : () async {
+                          final nav = Navigator.of(context);
                           bool isValid = formKey.currentState!.validate();
 
                           setDialogState(() {
@@ -399,7 +400,6 @@ Future<String?> _uploadImage(Uint8List imageBytes, String fileName) async {
                             }
                             imageUrl = url;
                           }
-
                           // save
                           await _productsRef.add({
                             'name': productNameController.text.trim(),
@@ -412,7 +412,7 @@ Future<String?> _uploadImage(Uint8List imageBytes, String fileName) async {
                             'createdAt': FieldValue.serverTimestamp(),
                           });
 
-                          Navigator.pop(context);
+                          nav.pop();
                         },
                   style: ElevatedButton.styleFrom(backgroundColor: Colors.white, elevation: 8),
                   child: Text("SAVE", style: TextStyle(fontSize: 13, fontFamily: "Arimo", color: Color(0xFF013b7a), fontWeight: FontWeight.w700)),
@@ -658,6 +658,7 @@ Future<String?> _uploadImage(Uint8List imageBytes, String fileName) async {
                   onPressed: isUploading
                       ? null
                       : () async {
+                          final nav = Navigator.of(context);
                           if (!formKey.currentState!.validate()) return;
 
                           setDialogState(() => isUploading = true);
@@ -668,6 +669,7 @@ Future<String?> _uploadImage(Uint8List imageBytes, String fileName) async {
                             final url = await _uploadImage(pickedImage!, fileName);
                             if (url == null) {
                               setDialogState(() => isUploading = false);
+                              if(!context.mounted) return;
                               ScaffoldMessenger.of(context).showSnackBar(
                                 SnackBar(
                                     content: Text("Image upload failed.", style: TextStyle(fontFamily: "Arimo")),
@@ -689,7 +691,7 @@ Future<String?> _uploadImage(Uint8List imageBytes, String fileName) async {
                             'imageUrl': imageUrl,
                           });
 
-                          Navigator.pop(context);
+                          nav.pop();
                         },
 
                   style: ElevatedButton.styleFrom(backgroundColor: Colors.white, elevation: 8),
@@ -707,6 +709,7 @@ Future<String?> _uploadImage(Uint8List imageBytes, String fileName) async {
     showDialog(
       context: context,
       builder: (context) {
+        final nav = Navigator.of(context);
         return AlertDialog(
           backgroundColor: Colors.white,
           title: Text("Delete Product", style: TextStyle(fontSize: 15, fontFamily: "Changa One")),
@@ -721,7 +724,7 @@ Future<String?> _uploadImage(Uint8List imageBytes, String fileName) async {
             TextButton(
               onPressed: () async {
                 await _productsRef.doc(product.id).delete();
-                Navigator.pop(context);
+                nav.pop();
               },
               child: Text("DELETE", style: TextStyle(fontSize: 13, fontFamily: "Arimo", color: Color(0xFFdc342c), fontWeight: FontWeight.w700)),
             ),

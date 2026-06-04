@@ -288,7 +288,7 @@ class _ProductCard extends StatelessWidget {
                               ),
                             );
                           },
-                          errorBuilder: (_, __, ___) => _placeholder(),
+                          errorBuilder: (_, _, _) => _placeholder(),
                         )
                       : _placeholder(),
 
@@ -930,6 +930,7 @@ class _InstallationFormDialogState extends State<_InstallationFormDialog> with W
           }
         }
       } catch (e) {
+        if(!mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text("Error: $e")),
         );
@@ -1191,7 +1192,7 @@ class _InstallationFormDialogState extends State<_InstallationFormDialog> with W
 
                               SizedBox(height: 15),
 
-                              Container(
+                              SizedBox(
                                 width: double.maxFinite,
                                 height: 45,
                                 child: ElevatedButton(

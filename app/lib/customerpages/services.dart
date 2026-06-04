@@ -310,6 +310,7 @@ class _ServicesState extends State<Services> with WidgetsBindingObserver {
     clearInstallationFields();
     }
     catch (e) {
+      if(!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text("Error: $e")),
       );
@@ -388,6 +389,7 @@ Future<void> submitRepairRequest() async {
     clearRepairFields();
   }
   catch (e) {
+    if(!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text("Error: $e")),
       );
@@ -1142,7 +1144,7 @@ void clearRepairFields() {
 
                               SizedBox(height: 15),
 
-                              Container(
+                              SizedBox(
                                 width: double.maxFinite,
                                 height: 45,
                                 child: ElevatedButton(
@@ -1588,7 +1590,7 @@ void clearRepairFields() {
 
                                   SizedBox(height: 15),
 
-                                  Container(
+                                  SizedBox(
                                     width: double.maxFinite,
                                     height: 45,
                                     child: ElevatedButton(

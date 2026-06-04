@@ -20,7 +20,7 @@ class _HistoryState extends State<History> {
       backgroundColor: Color(0xFFF8F8F8),
 
       body: Padding(
-        padding: EdgeInsets.all(50),
+        padding: EdgeInsets.all(25),
 
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,

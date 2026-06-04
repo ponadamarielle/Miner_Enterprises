@@ -181,9 +181,9 @@ class _ServiceRequestState extends State<ServiceRequest> {
             'serviceItems': serviceItems
           }),
         );
-        print("Approval email triggered successfully.");
+        debugPrint("Approval email triggered successfully.");
       } catch (e) {
-        print("Failed to trigger approval email: $e");
+        debugPrint("Failed to trigger approval email: $e");
       }
     }
 
@@ -240,7 +240,7 @@ class _ServiceRequestState extends State<ServiceRequest> {
         }),
       );
     } catch (e) {
-      print("Failed to send feedback email: $e");
+      debugPrint("Failed to send feedback email: $e");
     }
 
     await FirebaseFirestore.instance
@@ -322,6 +322,7 @@ class _ServiceRequestState extends State<ServiceRequest> {
               onPressed: selectedTechId == null
                   ? null
                   : () async {
+                    final nav = Navigator.of(context);
                       await FirebaseFirestore.instance
                           .collection('service_requests')
                           .doc(docId)
@@ -336,7 +337,7 @@ class _ServiceRequestState extends State<ServiceRequest> {
                           'technicianName': selectedTechName,
                         };
                       });
-                      Navigator.pop(context);
+                      nav.pop();
                     },
               style: ElevatedButton.styleFrom(
                   backgroundColor: Colors.white, elevation: 8),
@@ -362,13 +363,10 @@ class _ServiceRequestState extends State<ServiceRequest> {
           child: ListView.separated(
             shrinkWrap: true,
             itemCount: dayEvents.length,
-            separatorBuilder: (_, __) => SizedBox(height: 8),
+            separatorBuilder: (_, _) => SizedBox(height: 8),
             itemBuilder: (context, index) {
               final e = dayEvents[index];
-              final techId = e['technicianId'] ?? '';
               final techName = e['technicianName'] ?? '';
-              final textColor = getTextColor(techId);
-              final chipBg = getChipColor(techId);
 
               return GestureDetector(
                 onTap: () {
@@ -385,7 +383,7 @@ class _ServiceRequestState extends State<ServiceRequest> {
                     color: getChipColor(e['technicianId'] ?? ''),
                     borderRadius: BorderRadius.circular(8),
                   ),
-                  child: Text("${e['name'] ?? ''} - ${e['time'] ?? ''} ${techName}", style: TextStyle(color: getTextColor(e['technicianId'] ?? ''), fontSize: 12, fontWeight: FontWeight.w600)),
+                  child: Text("${e['name'] ?? ''} - ${e['time'] ?? ''} $techName", style: TextStyle(color: getTextColor(e['technicianId'] ?? ''), fontSize: 12, fontWeight: FontWeight.w600)),
                 ),
               );
             },
@@ -429,8 +427,6 @@ class _ServiceRequestState extends State<ServiceRequest> {
           Expanded(
             child: LayoutBuilder(
               builder: (context, constraints) {
-                const chipHeight = 15.0;
-                const chipSpacing = 2.0;
                 final maxChips = 2;
                 final safeMaxChips = maxChips < 1 ? 1 : maxChips;
 
@@ -526,7 +522,7 @@ class _ServiceRequestState extends State<ServiceRequest> {
 
                             return ListView.separated(
                               itemCount: allEvents.length,
-                              separatorBuilder: (_, __) => Divider(color: Colors.grey.shade200, height: 1),
+                              separatorBuilder: (_, _) => Divider(color: Colors.grey.shade200, height: 1),
                               itemBuilder: (context, index) {
                                 final e = allEvents[index];
                                 final date = (e['date'] as Timestamp).toDate();
@@ -992,7 +988,6 @@ class _ServiceRequestState extends State<ServiceRequest> {
                                       builder: (context) {
                                         final status = _selectedEvent?['status'] ?? 'Pending';
                                         final docId = _selectedEvent!['docId'];
-                                        final isCompleted = status == 'Completed';
 
                                         if (status == 'Pending') {
                                           return SizedBox(

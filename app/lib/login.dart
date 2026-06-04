@@ -53,8 +53,9 @@ class _LoginState extends State<Login> {
         password: password,
       );
 
-      print("Login successful");
+      debugPrint("Login successful");
 
+      if (!mounted) return;
       Navigator.pushReplacement(
         context,
         MaterialPageRoute(
@@ -93,7 +94,7 @@ class _LoginState extends State<Login> {
         isLoading = false; 
       });
 
-      print("UNKNOWN ERROR: $e");
+      debugPrint("UNKNOWN ERROR: $e");
     }
   }
 
