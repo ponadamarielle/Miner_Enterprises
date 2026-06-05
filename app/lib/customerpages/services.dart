@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 import 'package:dropdown_button2/dropdown_button2.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -23,6 +24,7 @@ class _ServicesState extends State<Services> with WidgetsBindingObserver {
   String? _pendingChargeId;
   String? _pendingRequestId;
   bool _waitingForPayment = false;
+  Timer? _paymentPollTimer;
 
   Set<String> iFullyBookedTimes = {};
   Set<String> rFullyBookedTimes = {};
@@ -72,6 +74,7 @@ class _ServicesState extends State<Services> with WidgetsBindingObserver {
 
   @override
   void dispose() {
+    _paymentPollTimer?.cancel();
     WidgetsBinding.instance.removeObserver(this);
     super.dispose();
   }
@@ -79,7 +82,6 @@ class _ServicesState extends State<Services> with WidgetsBindingObserver {
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
     if (state == AppLifecycleState.resumed && _waitingForPayment) {
-      _waitingForPayment = false;
       if (_pendingChargeId != null && _pendingRequestId != null) {
         verifyXenditPayment(_pendingChargeId!, _pendingRequestId!);
       }
@@ -488,6 +490,18 @@ Future<void> _initiateGcashPayment({
         _pendingRequestId = requestId;
         _waitingForPayment = true;
 
+        _paymentPollTimer?.cancel();
+        int pollCount = 0;
+        const maxPolls = 120; 
+        _paymentPollTimer = Timer.periodic(const Duration(seconds: 5), (timer) async {
+          if (!_waitingForPayment || pollCount >= maxPolls) {
+            timer.cancel();
+            return;
+          }
+          pollCount++;
+          await verifyXenditPayment(_pendingChargeId!, _pendingRequestId!);
+        });
+
       } else {
         throw Exception('Could not open GCash checkout URL.');
       }
@@ -517,6 +531,9 @@ Future<void> verifyXenditPayment(String chargeId, String requestId) async {
     final status = data['status'];
 
     if (status == 'SUCCEEDED') {
+      _waitingForPayment = false;
+      _paymentPollTimer?.cancel();
+
       final snapshot = await firestore
           .collection('service_requests')
           .where('requestId', isEqualTo: requestId)
@@ -533,6 +550,9 @@ Future<void> verifyXenditPayment(String chargeId, String requestId) async {
         );
       }
     } else if (status == 'FAILED') {
+      _waitingForPayment = false;
+      _paymentPollTimer?.cancel();
+
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text("GCash payment failed. Please try again.")),

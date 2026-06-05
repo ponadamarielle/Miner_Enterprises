@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:dropdown_button2/dropdown_button2.dart';
@@ -67,6 +68,9 @@ class _ShopAcsState extends State<ShopAcs> {
   void initState() {
     super.initState();
     _productsRef = FirebaseFirestore.instance.collection('products');
+    _productsRef.orderBy('createdAt', descending: true).get(
+      const GetOptions(source: Source.serverAndCache),
+    );
   }
 
   List<QueryDocumentSnapshot> _applyFilter(List<QueryDocumentSnapshot> docs) {
@@ -206,6 +210,7 @@ class _ShopAcsState extends State<ShopAcs> {
 
                   return GridView.builder(
                     padding: EdgeInsets.only(bottom: 30),
+                    cacheExtent: 1000,
                     gridDelegate:
                     SliverGridDelegateWithMaxCrossAxisExtent(
                       maxCrossAxisExtent: 280,
@@ -560,6 +565,8 @@ class _InstallationFormDialogState extends State<_InstallationFormDialog> with W
   String? _pendingChargeId;
   String? _pendingRequestId;
   bool _waitingForPayment = false;
+  Timer? _paymentPollTimer;
+  ScaffoldMessengerState? _scaffoldMessenger;
 
   final _formKey = GlobalKey<FormState>();
 
@@ -593,7 +600,6 @@ class _InstallationFormDialogState extends State<_InstallationFormDialog> with W
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
     if (state == AppLifecycleState.resumed && _waitingForPayment) {
-      _waitingForPayment = false;
       if (_pendingChargeId != null && _pendingRequestId != null) {
         _verifyXenditPayment(_pendingChargeId!, _pendingRequestId!);
       }
@@ -603,6 +609,7 @@ class _InstallationFormDialogState extends State<_InstallationFormDialog> with W
   @override
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
+    _paymentPollTimer?.cancel();
     iNameController.dispose();
     iMobileController.dispose();
     iEmailController.dispose();
@@ -813,6 +820,18 @@ class _InstallationFormDialogState extends State<_InstallationFormDialog> with W
           _pendingRequestId = requestId;
           _waitingForPayment = true;
 
+          _paymentPollTimer?.cancel();
+          int _pollCount = 0;
+          const int _maxPolls = 120; 
+          _paymentPollTimer = Timer.periodic(const Duration(seconds: 5), (timer) async {
+            _pollCount++;
+            if (!_waitingForPayment || _pollCount >= _maxPolls) {
+              timer.cancel();
+              return;
+            }
+            await _verifyXenditPayment(chargeId, requestId);
+          });
+
         } else {
           throw Exception('Could not open GCash checkout URL.');
         }
@@ -842,6 +861,9 @@ class _InstallationFormDialogState extends State<_InstallationFormDialog> with W
       final status = data['status'];
 
       if (status == 'SUCCEEDED') {
+        _paymentPollTimer?.cancel();
+        _waitingForPayment = false;
+
         final snapshot = await firestore
             .collection('service_requests')
             .where('requestId', isEqualTo: requestId)
@@ -852,17 +874,15 @@ class _InstallationFormDialogState extends State<_InstallationFormDialog> with W
           await snapshot.docs.first.reference.update({'paymentStatus': 'Paid'});
         }
 
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text("GCash payment confirmed!")),
-          );
-        }
+        _scaffoldMessenger?.showSnackBar(
+          SnackBar(content: Text("GCash payment confirmed!")),
+        );
       } else if (status == 'FAILED') {
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text("GCash payment failed. Please try again.")),
-          );
-        }
+        _paymentPollTimer?.cancel();
+        _waitingForPayment = false;
+        _scaffoldMessenger?.showSnackBar(
+          SnackBar(content: Text("GCash payment failed. Please try again.")),
+        );
       }
     } catch (e) {
       debugPrint('Xendit verify error: $e');
@@ -874,45 +894,61 @@ class _InstallationFormDialogState extends State<_InstallationFormDialog> with W
       setState(() => isLoading = true);
 
       try {
-        String requestId = await _generateServiceRequestId();
+
         final pickedDate = DateFormat("MM/dd/yyyy").parse(iDateController.text);
-        final technician = await _autoAssignTechnician(pickedDate, iSelectedTime!);
 
         final selectedProductData = _allProducts.firstWhere(
           (p) => p['name'] == iSelectedProduct,
           orElse: () => {'type': widget.product.type, 'price': widget.product.price},
         );
 
-        await firestore.collection("service_requests").add({
-          "requestId": requestId,
-          "serviceType": "Installation",
-          "technicianId": technician?["technicianId"] ?? "UNASSIGNED",
-          "technicianName": technician?["technicianName"] ?? "Unassigned",
-          "name": iNameController.text.trim(),
-          "mobileNumber": iMobileController.text.trim(),
-          "email": iEmailController.text.trim(),
-          "acType": selectedProductData['type'],
-          "productName": iSelectedProduct,
-          "productPrice": iSelectedPrice,
-          "serviceFee": installationFee,
-          "totalPrice": iSelectedPrice + installationFee,
-          "date": Timestamp.fromDate(pickedDate),
-          "time": iSelectedTime,
-          "address": iAddressController.text.trim(),
-          "paymentMethod": iPaymentMethod,
-          "paymentStatus": iPaymentMethod == "GCash" ? "Unpaid" : "Cash on Service",
-          "status": "Pending",
-          "timestamp": FieldValue.serverTimestamp(),
-        });
+        final results = await Future.wait([
+          _generateServiceRequestId(),
+          _autoAssignTechnician(pickedDate, iSelectedTime!),
+          Future.delayed(const Duration(seconds: 2)),
+        ]);
 
-        if (technician != null) {
-          await firestore
-              .collection("technicians")
-              .doc(technician["technicianId"])
-              .update({"todayJobCount": FieldValue.increment(1)});
-        }
+        final requestId = results[0] as String;
+        final technician = results[1] as Map<String, dynamic>?;
+
+        final docRef = firestore.collection("service_requests").doc();
+
+        Future.wait([
+          docRef.set({
+            "requestId": requestId,
+            "serviceType": "Installation",
+            "technicianId": technician?["technicianId"] ?? "UNASSIGNED",
+            "technicianName": technician?["technicianName"] ?? "Unassigned",
+            "name": iNameController.text.trim(),
+            "mobileNumber": iMobileController.text.trim(),
+            "email": iEmailController.text.trim(),
+            "acType": selectedProductData['type'],
+            "productName": iSelectedProduct,
+            "productPrice": iSelectedPrice,
+            "serviceFee": installationFee,
+            "totalPrice": iSelectedPrice + installationFee,
+            "date": Timestamp.fromDate(pickedDate),
+            "time": iSelectedTime,
+            "address": iAddressController.text.trim(),
+            "paymentMethod": iPaymentMethod,
+            "paymentStatus": iPaymentMethod == "GCash" ? "Unpaid" : "Cash on Service",
+            "status": "Pending",
+            "timestamp": FieldValue.serverTimestamp(),
+          }),
+          if (technician != null)
+            firestore
+                .collection("technicians")
+                .doc(technician["technicianId"])
+                .update({"todayJobCount": FieldValue.increment(1)}),
+        ]);
+
+        if (mounted) setState(() => isLoading = false);
 
         if (iPaymentMethod == "GCash") {
+          if (mounted) {
+            _scaffoldMessenger = ScaffoldMessenger.of(context);
+            Navigator.pop(context);
+          }
           await _initiateGcashPayment(
             amount: iSelectedPrice + installationFee,
             name: iNameController.text.trim(),
@@ -920,7 +956,6 @@ class _InstallationFormDialogState extends State<_InstallationFormDialog> with W
             phone: iMobileController.text.trim(),
             requestId: requestId,
           );
-          if (mounted) Navigator.pop(context);
         } else {
           if (mounted) {
             Navigator.pop(context);
@@ -930,13 +965,12 @@ class _InstallationFormDialogState extends State<_InstallationFormDialog> with W
           }
         }
       } catch (e) {
-        if(!mounted) return;
+        if (mounted) setState(() => isLoading = false);
+        if (!mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text("Error: $e")),
         );
       }
-
-      setState(() => isLoading = false);
     }
   }
 

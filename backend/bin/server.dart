@@ -286,7 +286,7 @@ Future<Map<String, dynamic>> _fetchDocumentFromFirestore(String requestId) async
 void main() async {
   final router = Router();
 
-  // sends invoices & receipts)
+  // sends invoices & receipts
   router.post('/email/approve', (Request request) async {
     final payload = await request.readAsString();
     final data = jsonDecode(payload);
@@ -335,13 +335,50 @@ void main() async {
     final bool isCashOnService = data['paymentMethod'] == 'Cash on Service';
     final bool isGCashPaid = data['paymentMethod'] == 'GCash' && paymentStatus == 'Paid';
 
-    final String attachmentNote = isCashOnService ? '<p><i>Please find your invoice attached to this email. Payment is due on the day of service.</i></p>' : isGCashPaid ? '<p><i>Please find your official receipt attached to this email.</i></p>' : '';
+    final String attachmentNote = isCashOnService
+        ? '<p><i>Please find your <b>Invoice</b> attached to this email. Payment is due on the day of service.</i></p>'
+        : isGCashPaid
+            ? '<p><i>Please find your <b>Official Receipt</b> attached to this email.</i></p>'
+            : '';
 
     final message = Message()
       ..from = Address('minerenterprises2911@gmail.com', 'Miner Enterprises')
       ..recipients.add(customerEmail)
       ..subject = 'Service Approved: $requestId'
-      ..html = '<h3>Hello $customerName,</h3><p>Your ${data['serviceType']} scheduled for <b>${data['date']}</b> at <b>${data['time']}</b> has been fully approved.</p>$attachmentNote';
+      ..html = '''
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: auto;">
+          <h2 style="color: #1565C0;">Service Request Approved</h2>
+          <p>Hello <b>$customerName</b>,</p>
+          <p>Great news! Your service request has been <b>approved</b> and is now scheduled.</p>
+          <table style="width:100%; border-collapse: collapse; margin: 16px 0;">
+            <tr style="background:#f5f5f5;">
+              <td style="padding:8px 12px; font-weight:bold; color:#555;">Request ID</td>
+              <td style="padding:8px 12px;">$requestId</td>
+            </tr>
+            <tr>
+              <td style="padding:8px 12px; font-weight:bold; color:#555;">Service Type</td>
+              <td style="padding:8px 12px;">${data['serviceType'] ?? ''}</td>
+            </tr>
+            <tr style="background:#f5f5f5;">
+              <td style="padding:8px 12px; font-weight:bold; color:#555;">Scheduled Date</td>
+              <td style="padding:8px 12px;">${data['date'] ?? ''}</td>
+            </tr>
+            <tr>
+              <td style="padding:8px 12px; font-weight:bold; color:#555;">Scheduled Time</td>
+              <td style="padding:8px 12px;">${data['time'] ?? ''}</td>
+            </tr>
+          </table>
+          $attachmentNote
+          <p style="margin-top:24px;">
+            For questions or support, contact us at
+            <a href="mailto:minerenterprises2911@gmail.com">minerenterprises2911@gmail.com</a>.
+          </p>
+          <br/>
+          <p style="color:#888; font-size:12px;">
+            &mdash; The <span style="color:#1565C0;">Miner</span><span style="color:#DC342C;"> Enterprises</span> Team
+          </p>
+        </div>
+      ''';
 
     File? tempFile;
 
@@ -470,17 +507,56 @@ void main() async {
       message.attachments.add(FileAttachment(tempFile));
 
       message.html = '''
-        <h3>Thank you!</h3>
-        <p>Your service is complete and payment has been received in full.</p>
-        <p>Please find your <b>Official Receipt</b> attached to this email.</p>
-        <br/>
-        <p>We'd love to hear about your experience. Please leave us feedback <a href="$formUrl">here</a>.</p>
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: auto;">
+          <h2 style="color: #1565C0;">Service Completed!</h2>
+          <p>Hello <b>$customerName</b>,</p>
+          <p>Your service has been <b>completed</b> and payment has been received in full.</p>
+          <table style="width:100%; border-collapse: collapse; margin: 16px 0;">
+            <tr style="background:#f5f5f5;">
+              <td style="padding:8px 12px; font-weight:bold; color:#555;">Request ID</td>
+              <td style="padding:8px 12px;">$reqId</td>
+            </tr>
+            <tr>
+              <td style="padding:8px 12px; font-weight:bold; color:#555;">Payment Method</td>
+              <td style="padding:8px 12px;">Cash (Paid on Completion)</td>
+            </tr>
+          </table>
+          <p><i>Please find your <b>Official Receipt</b> attached to this email.</i></p>
+          <p>We&rsquo;d love to hear about your experience. Please leave us feedback <a href="$formUrl">here</a>.</p>
+          <p style="margin-top:24px;">
+            For questions or support, contact us at
+            <a href="mailto:minerenterprises2911@gmail.com">minerenterprises2911@gmail.com</a>.
+          </p>
+          <br/>
+          <p style="color:#888; font-size:12px;">
+            &mdash; The <span style="color:#1565C0;">Miner</span><span style="color:#DC342C;"> Enterprises</span> Team
+          </p>
+        </div>
       ''';
+
+      
     } else {
       message.html = '''
-        <h3>Thank you!</h3>
-        <p>Your service is complete!</p>
-        <p>We'd love to hear about your experience. Please leave us feedback <a href="$formUrl">here</a>.</p>
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: auto;">
+          <h2 style="color: #1565C0;">Service Completed!</h2>
+          <p>Hello <b>$customerName</b>,</p>
+          <p>Your service has been <b>completed</b> successfully!</p>
+          <table style="width:100%; border-collapse: collapse; margin: 16px 0;">
+            <tr style="background:#f5f5f5;">
+              <td style="padding:8px 12px; font-weight:bold; color:#555;">Request ID</td>
+              <td style="padding:8px 12px;">$reqId</td>
+            </tr>
+          </table>
+          <p>We&rsquo;d love to hear about your experience. Please leave us feedback <a href="$formUrl">here</a>.</p>
+          <p style="margin-top:24px;">
+            For questions or support, contact us at
+            <a href="mailto:minerenterprises2911@gmail.com">minerenterprises2911@gmail.com</a>.
+          </p>
+          <br/>
+          <p style="color:#888; font-size:12px;">
+            &mdash; The <span style="color:#1565C0;">Miner</span><span style="color:#DC342C;"> Enterprises</span> Team
+          </p>
+        </div>
       ''';
     }
 
@@ -491,6 +567,72 @@ void main() async {
 
     if (tempFile != null && await tempFile.exists()) await tempFile.delete();
     return Response.ok('Feedback email processed');
+  });
+
+  // cancellation
+  router.post('/email/cancel', (Request request) async {
+    final payload = await request.readAsString();
+    final data = jsonDecode(payload);
+
+    final String requestId    = data['requestId'] ?? 'Unknown';
+    final String customerName = data['name'] ?? 'Customer';
+    final String customerEmail = data['email'];
+    final String serviceType  = data['serviceType'] ?? '';
+    final String date         = data['date'] ?? '';
+    final String time         = data['time'] ?? '';
+    final String reason       = data['reason'] ?? '';
+
+    final message = Message()
+      ..from = Address('minerenterprises2911@gmail.com', 'Miner Enterprises')
+      ..recipients.add(customerEmail)
+      ..subject = 'Service Request Cancelled: $requestId'
+      ..html = '''
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: auto;">
+          <h2 style="color: #DC342C;">Service Request Cancelled</h2>
+          <p>Hello <b>$customerName</b>,</p>
+          <p>We regret to inform you that your service request has been <b>cancelled</b> by our admin.</p>
+          <table style="width:100%; border-collapse: collapse; margin: 16px 0;">
+            <tr style="background:#f5f5f5;">
+              <td style="padding:8px 12px; font-weight:bold; color:#555;">Request ID</td>
+              <td style="padding:8px 12px;">$requestId</td>
+            </tr>
+            <tr>
+              <td style="padding:8px 12px; font-weight:bold; color:#555;">Service Type</td>
+              <td style="padding:8px 12px;">$serviceType</td>
+            </tr>
+            <tr style="background:#f5f5f5;">
+              <td style="padding:8px 12px; font-weight:bold; color:#555;">Scheduled Date</td>
+              <td style="padding:8px 12px;">$date</td>
+            </tr>
+            <tr>
+              <td style="padding:8px 12px; font-weight:bold; color:#555;">Scheduled Time</td>
+              <td style="padding:8px 12px;">$time</td>
+            </tr>
+            ${reason.isNotEmpty ? '''
+            <tr style="background:#f5f5f5;">
+              <td style="padding:8px 12px; font-weight:bold; color:#555;">Reason</td>
+              <td style="padding:8px 12px;">$reason</td>
+            </tr>''' : ''}
+          </table>
+          <p style="margin-top:24px;">
+            For questions or support, contact us at
+            <a href="mailto:minerenterprises2911@gmail.com">minerenterprises2911@gmail.com</a>.
+          </p>
+          <br/>
+          <p style="color:#888; font-size:12px;">
+            &mdash; The <span style="color:#1565C0;">Miner</span><span style="color:#DC342C;"> Enterprises</span> Team
+          </p>
+        </div>
+      ''';
+
+    try {
+      await send(message, smtpServer);
+      print('Cancellation email sent to $customerEmail');
+    } catch (e) {
+      print('Failed to send cancellation email: $e');
+    }
+
+    return Response.ok('Cancellation email processed');
   });
 
   const corsHeaders = {

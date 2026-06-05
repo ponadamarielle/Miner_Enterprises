@@ -16,7 +16,12 @@ class ServiceRequest extends StatefulWidget {
 class _ServiceRequestState extends State<ServiceRequest> {
   DateTime _focusedDay = DateTime.now();
   DateTime? _selectedDay;
-  Map<String, dynamic>? _selectedEvent;
+
+  final ValueNotifier<Map<String, dynamic>?> _selectedEventNotifier =
+      ValueNotifier(null);
+
+  Map<String, dynamic>? get _selectedEvent => _selectedEventNotifier.value;
+  set _selectedEvent(Map<String, dynamic>? v) => _selectedEventNotifier.value = v;
 
   Map<DateTime, List<Map<String, dynamic>>> events = {};
   StreamSubscription? _subscription;
@@ -30,6 +35,7 @@ class _ServiceRequestState extends State<ServiceRequest> {
   @override
   void dispose() {
     _subscription?.cancel();
+    _selectedEventNotifier.dispose();
     super.dispose();
   }
 
@@ -113,6 +119,15 @@ class _ServiceRequestState extends State<ServiceRequest> {
     final serviceType = _selectedEvent?['serviceType'] ?? '';
     final productName = _selectedEvent?['productName'];
 
+    if (mounted) {
+      setState(() {
+        _selectedEvent = {
+          ..._selectedEvent!,
+          'status': newStatus,
+        };
+      });
+    }
+
     await firestore
         .collection('service_requests')
         .doc(docId)
@@ -187,15 +202,42 @@ class _ServiceRequestState extends State<ServiceRequest> {
       }
     }
 
-    setState(() {
-      _selectedEvent = {
-        ..._selectedEvent!,
-        'status': newStatus,
-      };
-    });
+    if (newStatus == 'Cancelled' && _selectedEvent != null) {
+      try {
+        await http.post(
+          Uri.parse('http://localhost:8080/email/cancel'),
+          headers: {'Content-Type': 'application/json'},
+          body: jsonEncode({
+            'requestId': _selectedEvent?['requestId'],
+            'name': _selectedEvent?['name'],
+            'email': _selectedEvent?['email'],
+            'serviceType': _selectedEvent?['serviceType'] ?? '',
+            'date': _selectedEvent?['date'] != null
+                ? DateFormat('MM-dd-yyyy').format((_selectedEvent!['date'] as Timestamp).toDate())
+                : '',
+            'time': _selectedEvent?['time'] ?? '',
+            'reason': _selectedEvent?['cancelReason'] ?? '',
+          }),
+        );
+        debugPrint('Cancellation email triggered successfully.');
+      } catch (e) {
+        debugPrint('Failed to trigger cancellation email: \$e');
+      }
+    }
+
   }
 
-  Future<void> moveToHistory(String docId) async {
+  Future<void> moveToHistory(String docId, {String status = 'Completed'}) async {
+    if (mounted) {
+      _selectedEventNotifier.value = null;
+      setState(() {
+        for (final key in events.keys) {
+          events[key]?.removeWhere((e) => e['docId'] == docId);
+        }
+        events.removeWhere((key, value) => value.isEmpty);
+      });
+    }
+
     final doc = await FirebaseFirestore.instance
         .collection('service_requests')
         .doc(docId)
@@ -213,44 +255,42 @@ class _ServiceRequestState extends State<ServiceRequest> {
       'completedAt': FieldValue.serverTimestamp(),
     });
 
-  try {
-      final List<Map<String, dynamic>> serviceItems = [
-        {
-          'serviceType': eventData['serviceType'] ?? '',
-          'productName': eventData['productName'] ?? '',
-          'productPrice': eventData['productPrice'] ?? 0,
-          'description': eventData['description'] ?? '',
-        }
-      ];
+  if (status != 'Cancelled') {
+      try {
+        final List<Map<String, dynamic>> serviceItems = [
+          {
+            'serviceType': eventData['serviceType'] ?? '',
+            'productName': eventData['productName'] ?? '',
+            'productPrice': eventData['productPrice'] ?? 0,
+            'description': eventData['description'] ?? '',
+          }
+        ];
 
-      await http.post(
-        Uri.parse('http://localhost:8080/email/feedback'),
-        headers: {'Content-Type': 'application/json'},
-        body: jsonEncode({
-          'email': eventData['email'],
-          'requestId': eventData['requestId'],
-          'technicianId': eventData['technicianId'],
-          'name': eventData['name'],
-          'address': eventData['address'] ?? '',
-          'date': eventData['date'] != null ? DateFormat('MM-dd-yyyy').format((eventData['date'] as Timestamp).toDate()): '',
-          'paymentMethod': eventData['paymentMethod'] ?? '',
-          'serviceFee': eventData['serviceFee'] ?? 0,
-          'totalPrice': eventData['totalPrice'] ?? 0,
-          'serviceItems': serviceItems,
-        }),
-      );
-    } catch (e) {
-      debugPrint("Failed to send feedback email: $e");
+        await http.post(
+          Uri.parse('http://localhost:8080/email/feedback'),
+          headers: {'Content-Type': 'application/json'},
+          body: jsonEncode({
+            'email': eventData['email'],
+            'requestId': eventData['requestId'],
+            'technicianId': eventData['technicianId'],
+            'name': eventData['name'],
+            'address': eventData['address'] ?? '',
+            'date': eventData['date'] != null ? DateFormat('MM-dd-yyyy').format((eventData['date'] as Timestamp).toDate()): '',
+            'paymentMethod': eventData['paymentMethod'] ?? '',
+            'serviceFee': eventData['serviceFee'] ?? 0,
+            'totalPrice': eventData['totalPrice'] ?? 0,
+            'serviceItems': serviceItems,
+          }),
+        );
+      } catch (e) {
+        debugPrint("Failed to send feedback email: $e");
+      }
     }
 
     await FirebaseFirestore.instance
         .collection('service_requests')
         .doc(docId)
         .delete();
-
-    setState(() {
-      _selectedEvent = null;
-    });
   }
 
   Future<void> _showReassignDialog(BuildContext context, String docId) async {
@@ -371,9 +411,9 @@ class _ServiceRequestState extends State<ServiceRequest> {
               return GestureDetector(
                 onTap: () {
                   Navigator.pop(context);
+                  _selectedEventNotifier.value = e;
                   setState(() {
                     _selectedDay = day;
-                    _selectedEvent = e;
                   });
                 },
                 child: Container(
@@ -439,9 +479,9 @@ class _ServiceRequestState extends State<ServiceRequest> {
                     ...visibleEvents.map((e) {
                       return GestureDetector(
                         onTap: () {
+                          _selectedEventNotifier.value = e;
                           setState(() {
                             _selectedDay = day;
-                            _selectedEvent = e;
                           });
                         },
                         child: Container(
@@ -482,7 +522,7 @@ class _ServiceRequestState extends State<ServiceRequest> {
     return Scaffold(
       backgroundColor: Color(0xFFF5F6FA),
       body: Padding(
-        padding: EdgeInsets.symmetric(horizontal: 20, vertical: 5),
+        padding: EdgeInsets.symmetric(horizontal: 20, vertical: 15),
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
@@ -501,8 +541,9 @@ class _ServiceRequestState extends State<ServiceRequest> {
                       Text("List View", style: TextStyle(fontSize: 18, fontFamily: "Arimo", fontWeight: FontWeight.bold)),
                       SizedBox(height: 15),
                       Expanded(
-                        child: Builder(
-                          builder: (context) {
+                        child: ValueListenableBuilder<Map<String, dynamic>?>(
+                          valueListenable: _selectedEventNotifier,
+                          builder: (context, selectedEvent, _) {
                             List<Map<String, dynamic>> allEvents = [];
                             for (var dayEvents in events.values) {
                               allEvents.addAll(dayEvents);
@@ -526,7 +567,7 @@ class _ServiceRequestState extends State<ServiceRequest> {
                               itemBuilder: (context, index) {
                                 final e = allEvents[index];
                                 final date = (e['date'] as Timestamp).toDate();
-                                final isSelected = _selectedEvent?['docId'] == e['docId'];
+                                final isSelected = selectedEvent?['docId'] == e['docId'];
                                 
                                 return ListTile(
                                   contentPadding: EdgeInsets.symmetric(horizontal: 10, vertical: 4),
@@ -568,10 +609,10 @@ class _ServiceRequestState extends State<ServiceRequest> {
                                     ),
                                   ),
                                   onTap: () {
+                                    _selectedEventNotifier.value = e;
                                     setState(() {
                                       _selectedDay = date;
-                                      _focusedDay = date; 
-                                      _selectedEvent = e;
+                                      _focusedDay = date;
                                     });
                                   },
                                 );
@@ -615,7 +656,15 @@ class _ServiceRequestState extends State<ServiceRequest> {
                         borderRadius: BorderRadius.circular(12),
                       ),
                       clipBehavior: Clip.hardEdge,
-                      child: TableCalendar(
+                      child: LayoutBuilder(
+                        builder: (context, constraints) {
+                          const double headerHeight = 0;
+                          const double daysOfWeekHeight = 28;
+                          final double availableForRows = constraints.maxHeight - headerHeight - daysOfWeekHeight;
+                          final double rowHeight = availableForRows / 6;
+                          return SizedBox(
+                            height: constraints.maxHeight,
+                            child: TableCalendar(
                         firstDay: DateTime(
                           DateTime.now().year,
                           DateTime.now().month,
@@ -623,17 +672,19 @@ class _ServiceRequestState extends State<ServiceRequest> {
                         ),
                         lastDay: DateTime.utc(2100, 12, 31),
                         focusedDay: _focusedDay,
-                        rowHeight: 83,
-                        daysOfWeekHeight: 28,
+                        calendarFormat: CalendarFormat.month,
+                        availableCalendarFormats: const {CalendarFormat.month: 'Month'},
+                        rowHeight: rowHeight,
+                        daysOfWeekHeight: daysOfWeekHeight,
                         selectedDayPredicate: (day) =>
                             isSameDay(_selectedDay, day),
                         onDaySelected: (selected, focused) {
+                          final dayEvents = getEvents(selected);
+                          _selectedEventNotifier.value =
+                              dayEvents.isNotEmpty ? dayEvents.first : null;
                           setState(() {
                             _selectedDay = selected;
                             _focusedDay = focused;
-                            final dayEvents = getEvents(selected);
-                            _selectedEvent =
-                                dayEvents.isNotEmpty ? dayEvents.first : null;
                           });
                         },
                         onPageChanged: (focused) {
@@ -668,6 +719,9 @@ class _ServiceRequestState extends State<ServiceRequest> {
                           markerBuilder: (context, day, events) => SizedBox(),
                         ),
                       ),
+                      );
+                        },
+                      ),
                     ),
                   ),
                 ],
@@ -683,7 +737,10 @@ class _ServiceRequestState extends State<ServiceRequest> {
                 ),
                 child: Padding(
                   padding: EdgeInsets.only(left: 25, top: 25, right: 5, bottom: 15),
-                  child: _selectedEvent == null
+                  child: ValueListenableBuilder<Map<String, dynamic>?>(
+                    valueListenable: _selectedEventNotifier,
+                    builder: (context, selectedEventVal, _) =>
+                      selectedEventVal == null
                       ? Container(
                           alignment: Alignment.center,
                           child: Text("Select an event", style: TextStyle(color: Colors.grey, fontSize: 15, fontFamily: "Arimo")),
@@ -1016,8 +1073,8 @@ class _ServiceRequestState extends State<ServiceRequest> {
                                             width: double.infinity,
                                             child: ElevatedButton(
                                               onPressed: () async {
+                                                await moveToHistory(docId, status: 'Completed');
                                                 await _updateStatus(docId, 'Completed');
-                                                await moveToHistory(docId);
                                               },
                                               style: ElevatedButton.styleFrom(
                                                 padding: EdgeInsets.symmetric(horizontal: 27, vertical: 15),
@@ -1101,10 +1158,18 @@ class _ServiceRequestState extends State<ServiceRequest> {
                                                       ),
                                                     );
                                                     if (confirm == true) {
+                                                      final cancelDocId = docId;
+                                                      _selectedEventNotifier.value = null;
+                                                      setState(() {
+                                                        for (final key in events.keys) {
+                                                          events[key]?.removeWhere((e) => e['docId'] == cancelDocId);
+                                                        }
+                                                        events.removeWhere((key, value) => value.isEmpty);
+                                                      });
                                                       await _updateStatus(
-                                                          docId, 'Cancelled');
+                                                          cancelDocId, 'Cancelled');
                                                       await moveToHistory(
-                                                          docId);
+                                                          cancelDocId, status: 'Cancelled');
                                                     }
                                                   }
                                                 : null,
@@ -1136,6 +1201,7 @@ class _ServiceRequestState extends State<ServiceRequest> {
                           ),
                         ),
                 ),
+                    ),  // ValueListenableBuilder
               ),
             ),
           ],
