@@ -1,7 +1,9 @@
 import 'dart:async';
 import 'dart:convert';
+import 'package:web/web.dart' as web;
 import 'package:dropdown_button2/dropdown_button2.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
@@ -25,6 +27,9 @@ class _ServicesState extends State<Services> with WidgetsBindingObserver {
   String? _pendingRequestId;
   bool _waitingForPayment = false;
   Timer? _paymentPollTimer;
+  StreamSubscription<web.Event>? _webVisibilitySubscription;
+  ScaffoldMessengerState? _scaffoldMessenger;
+
 
   Set<String> iFullyBookedTimes = {};
   Set<String> rFullyBookedTimes = {};
@@ -70,11 +75,22 @@ class _ServicesState extends State<Services> with WidgetsBindingObserver {
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
+
+    if (kIsWeb) {
+      _webVisibilitySubscription =
+          web.document.onVisibilityChange.listen((_) {
+        final visible = web.document.visibilityState == 'visible';
+        if (visible && _waitingForPayment) {
+          _onUserReturned();
+        }
+      });
+    }
   }
 
   @override
   void dispose() {
     _paymentPollTimer?.cancel();
+    _webVisibilitySubscription?.cancel();
     WidgetsBinding.instance.removeObserver(this);
     super.dispose();
   }
@@ -82,10 +98,30 @@ class _ServicesState extends State<Services> with WidgetsBindingObserver {
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
     if (state == AppLifecycleState.resumed && _waitingForPayment) {
-      if (_pendingChargeId != null && _pendingRequestId != null) {
-        verifyXenditPayment(_pendingChargeId!, _pendingRequestId!);
-      }
+      _onUserReturned();
     }
+  }
+
+  void _onUserReturned() {
+    if (_pendingChargeId == null || _pendingRequestId == null) return;
+
+    _paymentPollTimer?.cancel();
+
+    verifyXenditPayment(_pendingChargeId!, _pendingRequestId!).then((_) {
+      if (_waitingForPayment) {
+        int pollCount = 0;
+        const maxPolls = 120;
+        _paymentPollTimer =
+            Timer.periodic(const Duration(seconds: 1), (timer) async {
+          pollCount++;
+          if (!_waitingForPayment || pollCount >= maxPolls) {
+            timer.cancel();
+            return;
+          }
+          await verifyXenditPayment(_pendingChargeId!, _pendingRequestId!);
+        });
+      }
+    });
   }
 
   // customize request id
@@ -293,6 +329,11 @@ class _ServicesState extends State<Services> with WidgetsBindingObserver {
     }
 
     if (iPaymentMethod == "GCash") {
+      if (mounted) {
+        _scaffoldMessenger = ScaffoldMessenger.of(context);
+        setState(() => showInstallationForm = false);
+        clearInstallationFields();
+      }
       await _initiateGcashPayment(
         amount: iSelectedPrice + installationFee,
         name: iNameController.text.trim(),
@@ -302,14 +343,13 @@ class _ServicesState extends State<Services> with WidgetsBindingObserver {
       );
     } else {
       if (mounted) {
+        setState(() => showInstallationForm = false);
+        clearInstallationFields();
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text("Installation request submitted successfully")),
         );
       }
     }
-
-    if (mounted) setState(() => showInstallationForm = false);
-    clearInstallationFields();
     }
     catch (e) {
       if(!mounted) return;
@@ -372,6 +412,11 @@ Future<void> submitRepairRequest() async {
     }
 
     if (rPaymentMethod == "GCash") {
+      if (mounted) {
+        _scaffoldMessenger = ScaffoldMessenger.of(context);
+        setState(() => showRepairForm = false);
+        clearRepairFields();
+      }
       await _initiateGcashPayment(
         amount: repairFee,
         name: rNameController.text.trim(),
@@ -381,14 +426,13 @@ Future<void> submitRepairRequest() async {
       );
     } else {
       if (mounted) {
+        setState(() => showRepairForm = false);
+        clearRepairFields();
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text("Repair request submitted successfully")),
         );
       }
     }
-
-    if (mounted) setState(() => showRepairForm = false);
-    clearRepairFields();
   }
   catch (e) {
     if(!mounted) return;
@@ -473,7 +517,7 @@ Future<void> _initiateGcashPayment({
           ?? '';
 
       if (checkoutUrl.isNotEmpty && await canLaunchUrl(Uri.parse(checkoutUrl))) {
-        await launchUrl(Uri.parse(checkoutUrl), mode: LaunchMode.externalApplication);
+        launchUrl(Uri.parse(checkoutUrl), mode: LaunchMode.externalApplication);
 
         final snapshot = await firestore
             .collection('service_requests')
@@ -492,13 +536,13 @@ Future<void> _initiateGcashPayment({
 
         _paymentPollTimer?.cancel();
         int pollCount = 0;
-        const maxPolls = 120; 
-        _paymentPollTimer = Timer.periodic(const Duration(seconds: 5), (timer) async {
+        const maxPolls = 120;
+        _paymentPollTimer = Timer.periodic(const Duration(seconds: 1), (timer) async {
+          pollCount++;
           if (!_waitingForPayment || pollCount >= maxPolls) {
             timer.cancel();
             return;
           }
-          pollCount++;
           await verifyXenditPayment(_pendingChargeId!, _pendingRequestId!);
         });
 
@@ -531,8 +575,45 @@ Future<void> verifyXenditPayment(String chargeId, String requestId) async {
     final status = data['status'];
 
     if (status == 'SUCCEEDED') {
-      _waitingForPayment = false;
       _paymentPollTimer?.cancel();
+      if (!_waitingForPayment) return; 
+      _waitingForPayment = false;
+
+      if (mounted) {
+        showDialog(
+          context: context,
+          barrierDismissible: false,
+          builder: (ctx) => AlertDialog(
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+            title: Row(
+              children: const [
+                Icon(Icons.check_circle, color: Color(0xFF013B7A), size: 28),
+                SizedBox(width: 10),
+                Text("Payment Confirmed",
+                    style: TextStyle(fontFamily: "Changa One", fontSize: 18)),
+              ],
+            ),
+            content: const Text(
+              "Your GCash payment was successful!\nA receipt has been sent to your email.",
+              style: TextStyle(fontFamily: "Arimo", fontSize: 14),
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.of(ctx).pop(),
+                child: const Text("OK",
+                    style: TextStyle(
+                        fontFamily: "Arimo",
+                        color: Color(0xFF013B7A),
+                        fontWeight: FontWeight.bold)),
+              ),
+            ],
+          ),
+        );
+      } else {
+        _scaffoldMessenger?.showSnackBar(
+          const SnackBar(content: Text("GCash payment confirmed! Receipt sent to your email.")),
+        );
+      }
 
       final snapshot = await firestore
           .collection('service_requests')
@@ -541,12 +622,65 @@ Future<void> verifyXenditPayment(String chargeId, String requestId) async {
           .get();
 
       if (snapshot.docs.isNotEmpty) {
-        await snapshot.docs.first.reference.update({'paymentStatus': 'Paid'});
-      }
+        final docRef = snapshot.docs.first.reference;
+        final docData = snapshot.docs.first.data();
 
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text("GCash payment confirmed!")),
+        await docRef.update({
+          'paymentStatus': 'Paid',
+          'status': 'Approved',
+        });
+
+        if ((docData['serviceType'] ?? '') == 'Installation' &&
+            (docData['productName'] ?? '').isNotEmpty) {
+          final productQuery = await firestore
+              .collection('products')
+              .where('name', isEqualTo: docData['productName'])
+              .get();
+
+          if (productQuery.docs.isNotEmpty) {
+            await productQuery.docs.first.reference.update({
+              'stockQuantity': FieldValue.increment(-1),
+            });
+          }
+        }
+
+        final counterRef = firestore.collection('counters').doc('receipts');
+        int receiptNumber = 1;
+        await firestore.runTransaction((transaction) async {
+          final counterSnap = await transaction.get(counterRef);
+          if (!counterSnap.exists) {
+            transaction.set(counterRef, {'lastNumber': 1});
+            receiptNumber = 1;
+          } else {
+            receiptNumber = (counterSnap['lastNumber'] ?? 0) + 1;
+            transaction.update(counterRef, {'lastNumber': receiptNumber});
+          }
+        });
+
+        const serverUrl = 'http://localhost:8080';
+        await http.post(
+          Uri.parse('$serverUrl/email/approve'),
+          headers: {'Content-Type': 'application/json'},
+          body: jsonEncode({
+            'requestId': requestId,
+            'name': docData['name'] ?? '',
+            'email': docData['email'] ?? '',
+            'paymentStatus': 'Paid',
+            'paymentMethod': 'GCash',
+            'serviceType': docData['serviceType'] ?? '',
+            'date': docData['date'] != null
+                ? DateFormat('MM/dd/yyyy').format((docData['date'] as Timestamp).toDate())
+                : '',
+            'time': docData['time'] ?? '',
+            'address': docData['address'] ?? '',
+            'serviceFee': docData['serviceFee'] ?? 0,
+            'totalPrice': docData['totalPrice'] ?? 0,
+            'productName': docData['productName'] ?? '',
+            'productPrice': docData['productPrice'] ?? 0,
+            'description': docData['description'] ?? '',
+            'xenditChargeId': chargeId,
+            'receiptNumber': receiptNumber,
+          }),
         );
       }
     } else if (status == 'FAILED') {
@@ -554,8 +688,38 @@ Future<void> verifyXenditPayment(String chargeId, String requestId) async {
       _paymentPollTimer?.cancel();
 
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text("GCash payment failed. Please try again.")),
+        showDialog(
+          context: context,
+          barrierDismissible: false,
+          builder: (ctx) => AlertDialog(
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+            title: Row(
+              children: const [
+                Icon(Icons.error_outline, color: Colors.red, size: 28),
+                SizedBox(width: 10),
+                Text("Payment Failed",
+                    style: TextStyle(fontFamily: "Changa One", fontSize: 18)),
+              ],
+            ),
+            content: const Text(
+              "Your GCash payment could not be completed. Please try again.",
+              style: TextStyle(fontFamily: "Arimo", fontSize: 14),
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.of(ctx).pop(),
+                child: const Text("Close",
+                    style: TextStyle(
+                        fontFamily: "Arimo",
+                        color: Colors.red,
+                        fontWeight: FontWeight.bold)),
+              ),
+            ],
+          ),
+        );
+      } else {
+        _scaffoldMessenger?.showSnackBar(
+          const SnackBar(content: Text("GCash payment failed. Please try again.")),
         );
       }
     }
@@ -952,6 +1116,12 @@ void clearRepairFields() {
                                       validator: (value) {
                                         if (value == null || value.trim().isEmpty) {
                                           return "Mobile number is required";
+                                        }
+                                        if(value.length != 11) {
+                                          return "Mobile Number must be 11 digits";
+                                        }
+                                        if(!RegExp(r'^09\d{9}$').hasMatch(value)){
+                                          return "Enter a valid mobile number";
                                         }
                                         return null;
                                       },
@@ -1395,6 +1565,12 @@ void clearRepairFields() {
                                           ),
                                           validator: (value) {
                                             if (value == null || value.trim().isEmpty) return "Mobile number is required";
+                                            if(value.length != 11) {
+                                              return "Mobile Number must be 11 digits";
+                                            }
+                                            if(!RegExp(r'^09\d{9}$').hasMatch(value)){
+                                              return "Enter a valid mobile number";
+                                            }
                                             return null;
                                           },
                                         ),

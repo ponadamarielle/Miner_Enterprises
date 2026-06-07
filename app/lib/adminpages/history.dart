@@ -141,6 +141,8 @@ class _HistoryState extends State<History> {
 
             child: Expanded(
               child: SingleChildScrollView(
+              scrollDirection: Axis.vertical, 
+              child: SingleChildScrollView(
                 scrollDirection: Axis.horizontal,
                 child: ConstrainedBox(
                   constraints: BoxConstraints(
@@ -150,6 +152,7 @@ class _HistoryState extends State<History> {
                   child: StreamBuilder<QuerySnapshot>(
                     stream: FirebaseFirestore.instance
                         .collection('history')
+                        .orderBy('date', descending: true)
                         .snapshots(),
 
                     builder: (context, snapshot) {
@@ -265,6 +268,7 @@ class _HistoryState extends State<History> {
               ),
             ),
             )
+           )
           ],
         ),
       ),

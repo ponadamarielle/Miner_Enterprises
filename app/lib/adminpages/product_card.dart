@@ -79,13 +79,13 @@ class ProductCard extends StatelessWidget {
               ClipRRect(
                 borderRadius: BorderRadius.vertical(top: Radius.circular(12)),
                 child: SizedBox(
-                  height: 200,
+                  height: 190,
                   width: double.infinity,
                   child: product.imageUrl.isNotEmpty
                       ? Image.network(
                           product.imageUrl,
                           fit: BoxFit.cover,
-                          errorBuilder: (_, _, _) => Container(
+                          errorBuilder: (_, __, ___) => Container(
                             color: Colors.grey.shade100,
                             child: Icon(Icons.image_not_supported,
                                 color: Colors.grey),
@@ -98,7 +98,7 @@ class ProductCard extends StatelessWidget {
                 ),
               ),
 
-              // stock
+              // stock badge
               Positioned(
                 top: 8,
                 right: 8,
@@ -110,43 +110,98 @@ class ProductCard extends StatelessWidget {
                         : Color(0xFFFCEBEB),
                     borderRadius: BorderRadius.circular(999),
                   ),
-                  child: Text(isInStock ? "In stock" : "Out of stock", style: TextStyle(fontFamily: "Arimo", fontSize: 10, fontWeight: FontWeight.w500, color: isInStock  ? Color(0xFF3B6D11) : Color(0xFFA32D2D))),
+                  child: Text(
+                    isInStock ? "In stock" : "Out of stock",
+                    style: TextStyle(
+                      fontFamily: "Arimo",
+                      fontSize: 10,
+                      fontWeight: FontWeight.w500,
+                      color: isInStock ? Color(0xFF3B6D11) : Color(0xFFA32D2D),
+                    ),
+                  ),
                 ),
               ),
             ],
           ),
 
           // content
-            Expanded(
+          Expanded(
             child: Padding(
-              padding: EdgeInsets.fromLTRB(10, 8, 10, 0),
+              padding: EdgeInsets.fromLTRB(10, 8, 10, 8),
               child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(product.type.toUpperCase(), style: TextStyle(fontFamily: "Arimo", fontSize: 10, color: Colors.grey, letterSpacing: 0.5)),
-                SizedBox(height: 10),
-
-                Text(product.name, style: TextStyle(fontFamily: "Changa One", fontSize: 13,fontWeight: FontWeight.w500, color: Color(0xFF013b7a)), maxLines: 2, overflow: TextOverflow.ellipsis),
-                SizedBox(height: 6),
-
-                Text(product.description, style: TextStyle(fontFamily: "Arimo", fontSize: 11, color: Colors.grey), maxLines: 1, overflow: TextOverflow.ellipsis),
-                SizedBox(height: 17),
-
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Text("₱${product.price.toStringAsFixed(0)}", style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600)),
-                    Text(isLowStock ? "⚠ ${product.stockQuantity} left" : "${product.stockQuantity} left",
-                      style: TextStyle(fontFamily: "Arimo", fontWeight: FontWeight.w700, fontSize: 11, color: isLowStock ? Colors.orange : Colors.grey),
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.max,
+                children: [
+                  Text(
+                    product.type.toUpperCase(),
+                    style: TextStyle(
+                      fontFamily: "Arimo",
+                      fontSize: 10,
+                      color: Colors.grey,
+                      letterSpacing: 0.5,
                     ),
-                  ],
-                ),
-              ],
+                  ),
+
+                  SizedBox(height: 2),
+
+                  // name
+                  Text(
+                    product.name,
+                    style: TextStyle(
+                      fontFamily: "Changa One",
+                      fontSize: 13,
+                      fontWeight: FontWeight.w500,
+                      color: Color(0xFF013b7a),
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+
+                  SizedBox(height: 2),
+
+                  // description
+                  Text(
+                    product.description,
+                    style: TextStyle(
+                      fontFamily: "Arimo",
+                      fontSize: 11,
+                      color: Colors.grey,
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+
+                  Spacer(),
+
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        "₱${product.price.toStringAsFixed(0)}",
+                        style: TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                      Text(
+                        isLowStock
+                            ? "⚠ ${product.stockQuantity} left"
+                            : "${product.stockQuantity} left",
+                        style: TextStyle(
+                          fontFamily: "Arimo",
+                          fontWeight: FontWeight.w700,
+                          fontSize: 11,
+                          color: isLowStock ? Colors.orange : Colors.grey,
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
             ),
           ),
-        ),
 
-          SizedBox(height: 8),
+          // edit & delete buttons
           Container(
             decoration: BoxDecoration(
               border: Border(top: BorderSide(color: Colors.grey.shade100)),
@@ -167,9 +222,17 @@ class ProductCard extends StatelessWidget {
                       child: Row(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          Icon(Icons.edit_outlined, size: 12, color: Colors.grey.shade700),
+                          Icon(Icons.edit_outlined,
+                              size: 12, color: Colors.grey.shade700),
                           SizedBox(width: 3),
-                          Text("Edit", style: TextStyle(fontFamily: "Changa One", fontSize: 11, color: Colors.grey.shade700)),
+                          Text(
+                            "Edit",
+                            style: TextStyle(
+                              fontFamily: "Changa One",
+                              fontSize: 11,
+                              color: Colors.grey.shade700,
+                            ),
+                          ),
                         ],
                       ),
                     ),
@@ -191,9 +254,17 @@ class ProductCard extends StatelessWidget {
                       child: Row(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          Icon(Icons.delete_outline, size: 12, color: Color(0xFFdc342c)),
+                          Icon(Icons.delete_outline,
+                              size: 12, color: Color(0xFFdc342c)),
                           SizedBox(width: 3),
-                          Text("Del", style: TextStyle(fontFamily: "Changa One", fontSize: 11, color: Color(0xFFdc342c))),
+                          Text(
+                            "Del",
+                            style: TextStyle(
+                              fontFamily: "Changa One",
+                              fontSize: 11,
+                              color: Color(0xFFdc342c),
+                            ),
+                          ),
                         ],
                       ),
                     ),

@@ -104,10 +104,15 @@ class _ShopAcsState extends State<ShopAcs> {
   }
 
   void _openInstallationForm(_Product product) {
+    final pageContext = context;
+
     showDialog(
       context: context,
       barrierDismissible: false,
-      builder: (context) => _InstallationFormDialog(product: product),
+      builder: (context) => _InstallationFormDialog(
+        product: product,
+        mainPageContext: pageContext,
+      ),
     );
   }
 
@@ -550,8 +555,9 @@ class _ProductDetailSheet extends StatelessWidget {
 
 class _InstallationFormDialog extends StatefulWidget {
   final _Product product;
+  final BuildContext mainPageContext;
 
-  const _InstallationFormDialog({required this.product});
+  const _InstallationFormDialog({required this.product, required this.mainPageContext,});
 
   @override
   State<_InstallationFormDialog> createState() => _InstallationFormDialogState();
@@ -601,7 +607,21 @@ class _InstallationFormDialogState extends State<_InstallationFormDialog> with W
   void didChangeAppLifecycleState(AppLifecycleState state) {
     if (state == AppLifecycleState.resumed && _waitingForPayment) {
       if (_pendingChargeId != null && _pendingRequestId != null) {
-        _verifyXenditPayment(_pendingChargeId!, _pendingRequestId!);
+        _paymentPollTimer?.cancel();
+        verifyXenditPayment(_pendingChargeId!, _pendingRequestId!).then((_) {
+          if (_waitingForPayment) {
+            int pollCount = 0;
+            const int maxPolls = 120;
+            _paymentPollTimer = Timer.periodic(const Duration(seconds: 1), (timer) async {
+              pollCount++;
+              if (!_waitingForPayment || pollCount >= maxPolls) {
+                timer.cancel();
+                return;
+              }
+              await verifyXenditPayment(_pendingChargeId!, _pendingRequestId!);
+            });
+          }
+        });
       }
     }
   }
@@ -803,7 +823,7 @@ class _InstallationFormDialogState extends State<_InstallationFormDialog> with W
             ?? '';
 
         if (checkoutUrl.isNotEmpty && await canLaunchUrl(Uri.parse(checkoutUrl))) {
-          await launchUrl(Uri.parse(checkoutUrl), mode: LaunchMode.externalApplication);
+          launchUrl(Uri.parse(checkoutUrl), mode: LaunchMode.externalApplication);
 
           final snapshot = await firestore
               .collection('service_requests')
@@ -821,15 +841,15 @@ class _InstallationFormDialogState extends State<_InstallationFormDialog> with W
           _waitingForPayment = true;
 
           _paymentPollTimer?.cancel();
-          int _pollCount = 0;
-          const int _maxPolls = 120; 
-          _paymentPollTimer = Timer.periodic(const Duration(seconds: 5), (timer) async {
-            _pollCount++;
-            if (!_waitingForPayment || _pollCount >= _maxPolls) {
+          int pollCount = 0;
+          const int maxPolls = 120;
+          _paymentPollTimer = Timer.periodic(const Duration(seconds: 1), (timer) async {
+            pollCount++;
+            if (!_waitingForPayment || pollCount >= maxPolls) {
               timer.cancel();
               return;
             }
-            await _verifyXenditPayment(chargeId, requestId);
+            await verifyXenditPayment(chargeId, requestId);
           });
 
         } else {
@@ -847,47 +867,174 @@ class _InstallationFormDialogState extends State<_InstallationFormDialog> with W
     }
   }
 
-  Future<void> _verifyXenditPayment(String chargeId, String requestId) async {
-    try {
-      final secret = dotenv.env['XENDIT_SECRET_KEY'] ?? '';
-      final encoded = base64Encode(utf8.encode('$secret:'));
+  Future<void> verifyXenditPayment(String chargeId, String requestId) async {
+  try {
+    final secret = dotenv.env['XENDIT_SECRET_KEY'] ?? '';
+    final encoded = base64Encode(utf8.encode('$secret:'));
 
-      final res = await http.get(
-        Uri.parse('https://api.xendit.co/ewallets/charges/$chargeId'),
-        headers: {'Authorization': 'Basic $encoded'},
-      );
+    final res = await http.get(
+      Uri.parse('https://api.xendit.co/ewallets/charges/$chargeId'),
+      headers: {'Authorization': 'Basic $encoded'},
+    );
 
-      final data = jsonDecode(res.body);
-      final status = data['status'];
+    final data = jsonDecode(res.body);
+    final status = data['status'];
 
-      if (status == 'SUCCEEDED') {
-        _paymentPollTimer?.cancel();
-        _waitingForPayment = false;
+    if (status == 'SUCCEEDED') {
+      _paymentPollTimer?.cancel();
+      if (!_waitingForPayment) return; 
+      _waitingForPayment = false;
 
-        final snapshot = await firestore
-            .collection('service_requests')
-            .where('requestId', isEqualTo: requestId)
-            .where('paymentMethod', isEqualTo: 'GCash')
-            .get();
-
-        if (snapshot.docs.isNotEmpty) {
-          await snapshot.docs.first.reference.update({'paymentStatus': 'Paid'});
-        }
-
-        _scaffoldMessenger?.showSnackBar(
-          SnackBar(content: Text("GCash payment confirmed!")),
+      if (widget.mainPageContext.mounted) {
+        Navigator.pop(context);
+        showDialog(
+          context: widget.mainPageContext,
+          barrierDismissible: false,
+          builder: (ctx) => AlertDialog(
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+            title: Row(
+              children: const [
+                Icon(Icons.check_circle, color: Color(0xFF013B7A), size: 28),
+                SizedBox(width: 10),
+                Text("Payment Confirmed",
+                    style: TextStyle(fontFamily: "Changa One", fontSize: 18)),
+              ],
+            ),
+            content: const Text(
+              "Your GCash payment was successful!\nA receipt has been sent to your email.",
+              style: TextStyle(fontFamily: "Arimo", fontSize: 14),
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.of(ctx).pop(),
+                child: const Text("OK",
+                    style: TextStyle(
+                        fontFamily: "Arimo",
+                        color: Color(0xFF013B7A),
+                        fontWeight: FontWeight.bold)),
+              ),
+            ],
+          ),
         );
-      } else if (status == 'FAILED') {
-        _paymentPollTimer?.cancel();
-        _waitingForPayment = false;
+      } else {
         _scaffoldMessenger?.showSnackBar(
-          SnackBar(content: Text("GCash payment failed. Please try again.")),
+          const SnackBar(content: Text("GCash payment confirmed! Receipt sent to your email.")),
         );
       }
-    } catch (e) {
-      debugPrint('Xendit verify error: $e');
+
+      final snapshot = await firestore
+          .collection('service_requests')
+          .where('requestId', isEqualTo: requestId)
+          .where('paymentMethod', isEqualTo: 'GCash')
+          .get();
+
+      if (snapshot.docs.isNotEmpty) {
+        final docRef = snapshot.docs.first.reference;
+        final docData = snapshot.docs.first.data();
+
+        await docRef.update({
+          'paymentStatus': 'Paid',
+          'status': 'Approved',
+        });
+
+        if ((docData['serviceType'] ?? '') == 'Installation' &&
+            (docData['productName'] ?? '').isNotEmpty) {
+          final productQuery = await firestore
+              .collection('products')
+              .where('name', isEqualTo: docData['productName'])
+              .get();
+
+          if (productQuery.docs.isNotEmpty) {
+            await productQuery.docs.first.reference.update({
+              'stockQuantity': FieldValue.increment(-1),
+            });
+          }
+        }
+
+        final counterRef = firestore.collection('counters').doc('receipts');
+        int receiptNumber = 1;
+        await firestore.runTransaction((transaction) async {
+          final counterSnap = await transaction.get(counterRef);
+          if (!counterSnap.exists) {
+            transaction.set(counterRef, {'lastNumber': 1});
+            receiptNumber = 1;
+          } else {
+            receiptNumber = (counterSnap['lastNumber'] ?? 0) + 1;
+            transaction.update(counterRef, {'lastNumber': receiptNumber});
+          }
+        });
+
+        const serverUrl = 'http://localhost:8080';
+        await http.post(
+          Uri.parse('$serverUrl/email/approve'),
+          headers: {'Content-Type': 'application/json'},
+          body: jsonEncode({
+            'requestId': requestId,
+            'name': docData['name'] ?? '',
+            'email': docData['email'] ?? '',
+            'paymentStatus': 'Paid',
+            'paymentMethod': 'GCash',
+            'serviceType': docData['serviceType'] ?? '',
+            'date': docData['date'] != null
+                ? DateFormat('MM/dd/yyyy').format((docData['date'] as Timestamp).toDate())
+                : '',
+            'time': docData['time'] ?? '',
+            'address': docData['address'] ?? '',
+            'serviceFee': docData['serviceFee'] ?? 0,
+            'totalPrice': docData['totalPrice'] ?? 0,
+            'productName': docData['productName'] ?? '',
+            'productPrice': docData['productPrice'] ?? 0,
+            'description': docData['description'] ?? '',
+            'xenditChargeId': chargeId,
+            'receiptNumber': receiptNumber,
+          }),
+        );
+      }
+    } else if (status == 'FAILED') {
+      _waitingForPayment = false;
+      _paymentPollTimer?.cancel();
+
+      if (mounted) {
+        showDialog(
+          context: context,
+          barrierDismissible: false,
+          builder: (ctx) => AlertDialog(
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+            title: Row(
+              children: const [
+                Icon(Icons.error_outline, color: Colors.red, size: 28),
+                SizedBox(width: 10),
+                Text("Payment Failed",
+                    style: TextStyle(fontFamily: "Changa One", fontSize: 18)),
+              ],
+            ),
+            content: const Text(
+              "Your GCash payment could not be completed. Please try again.",
+              style: TextStyle(fontFamily: "Arimo", fontSize: 14),
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.of(ctx).pop(),
+                child: const Text("Close",
+                    style: TextStyle(
+                        fontFamily: "Arimo",
+                        color: Colors.red,
+                        fontWeight: FontWeight.bold)),
+              ),
+            ],
+          ),
+        );
+      } else {
+        _scaffoldMessenger?.showSnackBar(
+          const SnackBar(content: Text("GCash payment failed. Please try again.")),
+        );
+      }
     }
+  } catch (e) {
+    debugPrint('Xendit verify error: $e');
   }
+}
+
 
   Future<void> _submit() async {
     if (_formKey.currentState!.validate()) {
@@ -913,7 +1060,7 @@ class _InstallationFormDialogState extends State<_InstallationFormDialog> with W
 
         final docRef = firestore.collection("service_requests").doc();
 
-        Future.wait([
+        await Future.wait([
           docRef.set({
             "requestId": requestId,
             "serviceType": "Installation",
@@ -947,7 +1094,6 @@ class _InstallationFormDialogState extends State<_InstallationFormDialog> with W
         if (iPaymentMethod == "GCash") {
           if (mounted) {
             _scaffoldMessenger = ScaffoldMessenger.of(context);
-            Navigator.pop(context);
           }
           await _initiateGcashPayment(
             amount: iSelectedPrice + installationFee,
@@ -1058,6 +1204,12 @@ class _InstallationFormDialogState extends State<_InstallationFormDialog> with W
                                       ),
                                       validator: (value) {
                                         if (value == null || value.trim().isEmpty) return "Mobile number is required";
+                                        if(value.length != 11) {
+                                          return "Mobile Number must be 11 digits";
+                                        }
+                                        if(!RegExp(r'^09\d{9}$').hasMatch(value)){
+                                          return "Enter a valid mobile number";
+                                        }
                                         return null;
                                       },
                                     ),

@@ -25,6 +25,7 @@ class _ServiceRequestState extends State<ServiceRequest> {
 
   Map<DateTime, List<Map<String, dynamic>>> events = {};
   StreamSubscription? _subscription;
+  final Set<String> _processingDocIds = {};
 
   @override
   void initState() {
@@ -47,7 +48,12 @@ class _ServiceRequestState extends State<ServiceRequest> {
       Map<DateTime, List<Map<String, dynamic>>> loaded = {};
 
       for (var doc in snapshot.docs) {
+        if (_processingDocIds.contains(doc.id)) continue;
+
         final data = doc.data();
+
+        final status = data['status'];
+        if (status == 'Cancelled' || status == 'Completed') continue;
 
         final rawDate = data['date'];
 
@@ -112,14 +118,15 @@ class _ServiceRequestState extends State<ServiceRequest> {
     }
   }
 
-  Future<void> _updateStatus(String docId, String newStatus) async {
+  Future<void> _updateStatus(String docId, String newStatus, {Map<String, dynamic>? cachedEvent}) async {
     final firestore = FirebaseFirestore.instance;
+    final targetEvent = cachedEvent ?? _selectedEvent;
 
-    final currentStatus = _selectedEvent?['status'] ?? '';
-    final serviceType = _selectedEvent?['serviceType'] ?? '';
-    final productName = _selectedEvent?['productName'];
+    final currentStatus = targetEvent?['status'] ?? '';
+    final serviceType = targetEvent?['serviceType'] ?? '';
+    final productName = targetEvent?['productName'];
 
-    if (mounted) {
+    if (mounted && _selectedEvent != null && _selectedEvent!['docId'] == docId) {
       setState(() {
         _selectedEvent = {
           ..._selectedEvent!,
@@ -152,7 +159,7 @@ class _ServiceRequestState extends State<ServiceRequest> {
       }
     }
 
-    if (newStatus == 'Approved' && _selectedEvent != null) {
+    if (newStatus == 'Approved' && targetEvent != null) {
       try {
         final backendUrl = 'http://localhost:8080/email/approve';
 
@@ -168,10 +175,10 @@ class _ServiceRequestState extends State<ServiceRequest> {
 
         final List<Map<String, dynamic>> serviceItems = [
           {
-            'serviceType': _selectedEvent?['serviceType'] ?? '',
-            'productName': _selectedEvent?['productName'] ?? '',
-            'productPrice': _selectedEvent?['productPrice'] ?? 0,
-            'description': _selectedEvent?['description'] ?? '',
+            'serviceType': targetEvent['serviceType'] ?? '',
+            'productName': targetEvent['productName'] ?? '',
+            'productPrice': targetEvent['productPrice'] ?? 0,
+            'description': targetEvent['description'] ?? '',
           }
         ];
 
@@ -179,19 +186,19 @@ class _ServiceRequestState extends State<ServiceRequest> {
           Uri.parse(backendUrl),
           headers: {'Content-Type': 'application/json'},
           body: jsonEncode({
-            'requestId': _selectedEvent?['requestId'],
-            'name': _selectedEvent?['name'],
-            'email': _selectedEvent?['email'],
-            'address': _selectedEvent?['address'] ?? '',
-            'date': DateFormat('MM-dd-yyyy').format((_selectedEvent!['date'] as Timestamp).toDate()),
-            'time': _selectedEvent?['time'],
-            'technicianName': _selectedEvent?['technicianName'],
-            'serviceType': _selectedEvent?['serviceType'] ?? '',
-            'productName': _selectedEvent?['productName'] ?? '',
-            'productPrice': _selectedEvent?['productPrice'] ?? 0,
-            'paymentMethod': _selectedEvent?['paymentMethod'] ?? '',
-            'paymentStatus': _selectedEvent?['paymentStatus'] ?? 'Unpaid',
-            'xenditChargeId': _selectedEvent?['xenditChargeId'] ?? 'N/A',
+            'requestId': targetEvent['requestId'],
+            'name': targetEvent['name'],
+            'email': targetEvent['email'],
+            'address': targetEvent['address'] ?? '',
+            'date': DateFormat('MM-dd-yyyy').format((targetEvent['date'] as Timestamp).toDate()),
+            'time': targetEvent['time'],
+            'technicianName': targetEvent['technicianName'],
+            'serviceType': targetEvent['serviceType'] ?? '',
+            'productName': targetEvent['productName'] ?? '',
+            'productPrice': targetEvent['productPrice'] ?? 0,
+            'paymentMethod': targetEvent['paymentMethod'] ?? '',
+            'paymentStatus': targetEvent['paymentStatus'] ?? 'Unpaid',
+            'xenditChargeId': targetEvent['xenditChargeId'] ?? 'N/A',
             'receiptNumber': receiptNumber,
             'serviceItems': serviceItems
           }),
@@ -202,21 +209,21 @@ class _ServiceRequestState extends State<ServiceRequest> {
       }
     }
 
-    if (newStatus == 'Cancelled' && _selectedEvent != null) {
+    if (newStatus == 'Cancelled' && targetEvent != null) {
       try {
         await http.post(
           Uri.parse('http://localhost:8080/email/cancel'),
           headers: {'Content-Type': 'application/json'},
           body: jsonEncode({
-            'requestId': _selectedEvent?['requestId'],
-            'name': _selectedEvent?['name'],
-            'email': _selectedEvent?['email'],
-            'serviceType': _selectedEvent?['serviceType'] ?? '',
-            'date': _selectedEvent?['date'] != null
-                ? DateFormat('MM-dd-yyyy').format((_selectedEvent!['date'] as Timestamp).toDate())
+            'requestId': targetEvent['requestId'],
+            'name': targetEvent['name'],
+            'email': targetEvent['email'],
+            'serviceType': targetEvent['serviceType'] ?? '',
+            'date': targetEvent['date'] != null
+                ? DateFormat('MM-dd-yyyy').format((targetEvent['date'] as Timestamp).toDate())
                 : '',
-            'time': _selectedEvent?['time'] ?? '',
-            'reason': _selectedEvent?['cancelReason'] ?? '',
+            'time': targetEvent['time'] ?? '',
+            'reason': targetEvent['cancelReason'] ?? '',
           }),
         );
         debugPrint('Cancellation email triggered successfully.');
@@ -228,6 +235,8 @@ class _ServiceRequestState extends State<ServiceRequest> {
   }
 
   Future<void> moveToHistory(String docId, {String status = 'Completed'}) async {
+    _processingDocIds.add(docId);
+
     if (mounted) {
       _selectedEventNotifier.value = null;
       setState(() {
@@ -252,6 +261,7 @@ class _ServiceRequestState extends State<ServiceRequest> {
         .doc(docId)
         .set({
       ...eventData,
+      'status': status,
       'completedAt': FieldValue.serverTimestamp(),
     });
 
@@ -291,6 +301,7 @@ class _ServiceRequestState extends State<ServiceRequest> {
         .collection('service_requests')
         .doc(docId)
         .delete();
+    _processingDocIds.remove(docId);
   }
 
   Future<void> _showReassignDialog(BuildContext context, String docId) async {
@@ -1074,7 +1085,6 @@ class _ServiceRequestState extends State<ServiceRequest> {
                                             child: ElevatedButton(
                                               onPressed: () async {
                                                 await moveToHistory(docId, status: 'Completed');
-                                                await _updateStatus(docId, 'Completed');
                                               },
                                               style: ElevatedButton.styleFrom(
                                                 padding: EdgeInsets.symmetric(horizontal: 27, vertical: 15),
@@ -1159,6 +1169,9 @@ class _ServiceRequestState extends State<ServiceRequest> {
                                                     );
                                                     if (confirm == true) {
                                                       final cancelDocId = docId;
+                                                      final cachedEvent = Map<String, dynamic>.from(_selectedEvent!);
+
+                                                      _processingDocIds.add(cancelDocId);
                                                       _selectedEventNotifier.value = null;
                                                       setState(() {
                                                         for (final key in events.keys) {
@@ -1166,10 +1179,10 @@ class _ServiceRequestState extends State<ServiceRequest> {
                                                         }
                                                         events.removeWhere((key, value) => value.isEmpty);
                                                       });
-                                                      await _updateStatus(
-                                                          cancelDocId, 'Cancelled');
-                                                      await moveToHistory(
-                                                          cancelDocId, status: 'Cancelled');
+
+                                                      _updateStatus(cancelDocId, 'Cancelled', cachedEvent: cachedEvent).then((_) {
+                                                        moveToHistory(cancelDocId, status: 'Cancelled');
+                                                      });
                                                     }
                                                   }
                                                 : null,
