@@ -23,8 +23,8 @@ class _ProductsState extends State<Products> {
     "Split type",
     "Window type",
     "Portable",
-    "Central Air",
-    "Ductless Mini-splits",
+    'Central Air',
+    'Ductless Mini-splits',
     "In stock only"
   ];
 
@@ -91,6 +91,8 @@ Future<String?> _uploadImage(Uint8List imageBytes, String fileName) async {
     TextEditingController priceController = TextEditingController();
     TextEditingController stockController = TextEditingController();
     TextEditingController descriptionController = TextEditingController();
+    TextEditingController installationFeeController= TextEditingController();
+    TextEditingController repairFeeController= TextEditingController();
 
     Uint8List? pickedImage;
     bool isUploading = false;
@@ -113,7 +115,8 @@ Future<String?> _uploadImage(Uint8List imageBytes, String fileName) async {
                 width: 550,
                 child: Form(
                   key: formKey,
-                  child: Column(
+                  child: SingleChildScrollView(
+                    child: Column(
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       SizedBox(height: 10),
@@ -228,6 +231,72 @@ Future<String?> _uploadImage(Uint8List imageBytes, String fileName) async {
                               validator: (value) {
                                 if (value == null || value.trim().isEmpty) {
                                   return "Stock is required";
+                                }
+                                return null;
+                              },
+                            ),
+                          ),
+                        ],
+                      ),
+
+                      SizedBox(height: 20),
+
+                      Row(
+                        children: [
+                          Expanded(
+                            child: TextFormField(
+                              controller: installationFeeController,
+                              inputFormatters: [
+                                FilteringTextInputFormatter.digitsOnly,
+                                TextInputFormatter.withFunction((oldValue, newValue) {
+                                  if (newValue.text.isEmpty) return newValue;
+
+                                  if (newValue.text.length == 1 && newValue.text == '0') {
+                                    return oldValue;
+                                  }
+
+                                  return newValue;
+                                }),
+                              ],
+                              decoration: InputDecoration(
+                                labelText: "Installation Fee (₱)",
+                                labelStyle: TextStyle(fontSize: 15, fontFamily: "Arimo"),
+                                border: OutlineInputBorder(),
+                              ),
+                              validator: (value) {
+                                if (value == null || value.trim().isEmpty) {
+                                  return "Installation fee is required";
+                                }
+                                return null;
+                              },
+                            ),
+                          ),
+
+                          SizedBox(width: 10),
+
+                          Expanded(
+                            child: TextFormField(
+                              controller: repairFeeController,
+                              inputFormatters: [
+                                FilteringTextInputFormatter.digitsOnly,
+                                TextInputFormatter.withFunction((oldValue, newValue) {
+                                  if (newValue.text.isEmpty) return newValue;
+
+                                  if (newValue.text.length == 1 && newValue.text == '0') {
+                                    return oldValue;
+                                  }
+
+                                  return newValue;
+                                }),
+                              ],
+                              decoration: InputDecoration(
+                                labelText: "Repair Fee (₱)",
+                                labelStyle: TextStyle(fontSize: 15, fontFamily: "Arimo"),
+                                border: OutlineInputBorder(),
+                              ),
+                              validator: (value) {
+                                if (value == null || value.trim().isEmpty) {
+                                  return "Repair fee is required";
                                 }
                                 return null;
                               },
@@ -363,6 +432,7 @@ Future<String?> _uploadImage(Uint8List imageBytes, String fileName) async {
                     ],
                   ),
                 ),
+                ),
               ),
 
               actions: [
@@ -408,6 +478,8 @@ Future<String?> _uploadImage(Uint8List imageBytes, String fileName) async {
                             'price': double.parse(priceController.text.trim()),
                             'stockQuantity':
                                 int.parse(stockController.text.trim()),
+                            'installationFee': double.parse(installationFeeController.text.trim()),
+                            'repairFee': double.parse(repairFeeController.text.trim()),
                             'imageUrl': imageUrl,
                             'createdAt': FieldValue.serverTimestamp(),
                           });
@@ -433,6 +505,8 @@ Future<String?> _uploadImage(Uint8List imageBytes, String fileName) async {
     TextEditingController priceController = TextEditingController(text: product.price.toStringAsFixed(0));
     TextEditingController stockController = TextEditingController(text: product.stockQuantity.toString());
     TextEditingController descriptionController = TextEditingController(text: product.description);
+    TextEditingController installationFeeController = TextEditingController(text: product.installationFee.toStringAsFixed(0));
+    TextEditingController repairFeeController = TextEditingController(text: product.repairFee.toStringAsFixed(0));
 
     String dialogType = product.type;
     Uint8List? pickedImage;
@@ -452,7 +526,8 @@ Future<String?> _uploadImage(Uint8List imageBytes, String fileName) async {
                 width: 550,
                 child: Form(
                   key: formKey,
-                  child: Column(
+                  child: SingleChildScrollView(
+                    child: Column(
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       SizedBox(height: 10),
@@ -487,7 +562,7 @@ Future<String?> _uploadImage(Uint8List imageBytes, String fileName) async {
                                 labelStyle: TextStyle(fontSize: 15, fontFamily: "Arimo"),
                                 border: OutlineInputBorder(),
                               ),
-                              items: ["Split Type", "Window Type", "Portable", "Central Air", "Ductless Mini-splits"]
+                              items: ["Split Type", "Window Type", "Portable"]
                                   .map((e) => DropdownMenuItem(
                                       value: e, child: Text(e)))
                                   .toList(),
@@ -541,6 +616,68 @@ Future<String?> _uploadImage(Uint8List imageBytes, String fileName) async {
                               validator: (value) {
                                 if (value == null || value.trim().isEmpty) {
                                   return "Stock is required";
+                                }
+                                return null;
+                              },
+                            ),
+                          ),
+                        ],
+                      ),
+
+                      SizedBox(height: 20),
+
+                      Row(
+                        children: [
+                          Expanded(
+                            child: TextFormField(
+                              controller: installationFeeController,
+                              inputFormatters: [
+                                FilteringTextInputFormatter.digitsOnly,
+                                TextInputFormatter.withFunction((oldValue, newValue) {
+                                  if (newValue.text.isEmpty) return newValue;
+                                  if (newValue.text.length == 1 && newValue.text == '0') {
+                                    return oldValue;
+                                  }
+                                  return newValue;
+                                }),
+                              ],
+                              decoration: InputDecoration(
+                                labelText: "Installation Fee (₱)",
+                                labelStyle: TextStyle(fontSize: 15, fontFamily: "Arimo"),
+                                border: OutlineInputBorder(),
+                              ),
+                              validator: (value) {
+                                if (value == null || value.trim().isEmpty) {
+                                  return "Installation fee is required";
+                                }
+                                return null;
+                              },
+                            ),
+                          ),
+
+                          SizedBox(width: 10),
+
+                          Expanded(
+                            child: TextFormField(
+                              controller: repairFeeController,
+                              inputFormatters: [
+                                FilteringTextInputFormatter.digitsOnly,
+                                TextInputFormatter.withFunction((oldValue, newValue) {
+                                  if (newValue.text.isEmpty) return newValue;
+                                  if (newValue.text.length == 1 && newValue.text == '0') {
+                                    return oldValue;
+                                  }
+                                  return newValue;
+                                }),
+                              ],
+                              decoration: InputDecoration(
+                                labelText: "Repair Fee (₱)",
+                                labelStyle: TextStyle(fontSize: 15, fontFamily: "Arimo"),
+                                border: OutlineInputBorder(),
+                              ),
+                              validator: (value) {
+                                if (value == null || value.trim().isEmpty) {
+                                  return "Repair fee is required";
                                 }
                                 return null;
                               },
@@ -646,6 +783,7 @@ Future<String?> _uploadImage(Uint8List imageBytes, String fileName) async {
                     ],
                   ),
                 ),
+                ),
               ),
 
               actions: [
@@ -688,6 +826,8 @@ Future<String?> _uploadImage(Uint8List imageBytes, String fileName) async {
                             'price': double.parse(priceController.text.trim()),
                             'stockQuantity':
                                 int.parse(stockController.text.trim()),
+                            'installationFee': double.parse(installationFeeController.text.trim()),
+                            'repairFee': double.parse(repairFeeController.text.trim()),
                             'imageUrl': imageUrl,
                           });
 
@@ -853,7 +993,7 @@ Future<String?> _uploadImage(Uint8List imageBytes, String fileName) async {
                       case "Central Air":
                         return type == "central air";
                       case "Ductless Mini-splits":
-                        return type == "ductless mini-splits"; 
+                        return type == "ductless mini-split";
                       case "In stock only":
                         return stock > 0;
                       default:

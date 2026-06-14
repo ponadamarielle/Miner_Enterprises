@@ -10,6 +10,8 @@ class Product {
   final double price;
   final int stockQuantity;
   final String imageUrl;
+  final double installationFee;
+  final double repairFee;
 
   Product({
     required this.id,
@@ -19,6 +21,8 @@ class Product {
     required this.price,
     required this.stockQuantity,
     required this.imageUrl,
+    required this.installationFee,
+    required this.repairFee,
   });
 
   factory Product.fromDoc(DocumentSnapshot doc) {
@@ -31,6 +35,8 @@ class Product {
       price: (data['price'] ?? 0).toDouble(),
       stockQuantity: data['stockQuantity'] ?? 0,
       imageUrl: data['imageUrl'] ?? '',
+      installationFee: (data['installationFee'] ?? 0).toDouble(),
+      repairFee: (data['repairFee'] ?? 0).toDouble(),
     );
   }
 
@@ -42,6 +48,8 @@ class Product {
       'price': price,
       'stockQuantity': stockQuantity,
       'imageUrl': imageUrl,
+      'installationFee': installationFee,
+      'repairFee': repairFee,
     };
   }
 }
@@ -85,7 +93,7 @@ class ProductCard extends StatelessWidget {
                       ? Image.network(
                           product.imageUrl,
                           fit: BoxFit.cover,
-                          errorBuilder: (_, __, ___) => Container(
+                          errorBuilder: (_, _, _) => Container(
                             color: Colors.grey.shade100,
                             child: Icon(Icons.image_not_supported,
                                 color: Colors.grey),

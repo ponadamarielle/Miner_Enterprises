@@ -35,6 +35,9 @@ class _ServicesState extends State<Services> with WidgetsBindingObserver {
   Set<String> rFullyBookedTimes = {};
   int totalTechnicians = 0;
 
+  final ScrollController _installationScrollController = ScrollController();
+  final ScrollController _repairScrollController = ScrollController();
+
   final _installationFormKey = GlobalKey<FormState>();
   final _repairFormKey = GlobalKey<FormState>();
 
@@ -52,8 +55,8 @@ class _ServicesState extends State<Services> with WidgetsBindingObserver {
   double iSelectedPrice = 0.0;
   List<Map<String, dynamic>> iAllProducts = [];
 
-  static const double installationFee = 500.0;
-  static const double repairFee = 350.0;
+  double installationFee = 0.0;
+  double repairFee = 0.0;
 
   // repair
   final rNameController = TextEditingController();
@@ -89,6 +92,8 @@ class _ServicesState extends State<Services> with WidgetsBindingObserver {
 
   @override
   void dispose() {
+    _installationScrollController.dispose();
+    _repairScrollController.dispose();
     _paymentPollTimer?.cancel();
     _webVisibilitySubscription?.cancel();
     WidgetsBinding.instance.removeObserver(this);
@@ -362,7 +367,7 @@ class _ServicesState extends State<Services> with WidgetsBindingObserver {
   }
 }
 
-  // submit repair & maintenance form
+  // submit repair form
 Future<void> submitRepairRequest() async {
 
   if (_repairFormKey.currentState!.validate()) {
@@ -377,7 +382,7 @@ Future<void> submitRepairRequest() async {
     await firestore.collection("service_requests").add({
       
       "requestId": requestId,
-      "serviceType": "Repair & Maintenance",
+      "serviceType": "Repair",
 
       "technicianId": technician?["technicianId"] ?? "UNASSIGNED",
       "technicianName": technician?["technicianName"] ?? "Unassigned",
@@ -747,6 +752,7 @@ Future<void> fetchInstallationProducts() async {
         'price': (d['price'] as num?)?.toDouble() ?? 0.0,
         'type': d['type'] ?? '',
         'stockQuantity': d['stockQuantity'] ?? 0,
+        'installationFee': (d['installationFee'] as num?)?.toDouble() ?? 0.0,
       };
     }).toList();
   });
@@ -762,6 +768,7 @@ Future<void> fetchRepairProducts() async {
         'price': (d['price'] as num?)?.toDouble() ?? 0.0,
         'type': d['type'] ?? '',
         'stockQuantity': d['stockQuantity'] ?? 0,
+        'repairFee': (d['repairFee'] as num?)?.toDouble() ?? 0.0,
       };
     }).toList();
   });
@@ -947,15 +954,15 @@ void clearRepairFields() {
                     SizedBox(height: 30),
                     Icon(Icons.home_repair_service, size: 50, color: Color(0xFF013B7A)),
                     SizedBox(height: 12),
-                    Text("Repair & Maintenance", style: TextStyle(fontSize: 25, fontFamily: "Changa One", color: Color(0xFF013B7A))),
+                    Text("Repair", style: TextStyle(fontSize: 25, fontFamily: "Changa One", color: Color(0xFF013B7A))),
                     SizedBox(height: 40),
-                    Text("Fast diagnostics and reliable servicing to restore cooling", style: TextStyle(fontSize: 15, fontFamily: "Arimo")),
+                    Text("Fast diagnostics and reliable servicing to restore", style: TextStyle(fontSize: 15, fontFamily: "Arimo")),
                     SizedBox(height: 5),
-                    Text("performance and prevent future issues.", style: TextStyle(fontSize: 15, fontFamily: "Arimo")),
+                    Text("cooling performance.", style: TextStyle(fontSize: 15, fontFamily: "Arimo")),
                     SizedBox(height: 50),
 
                     Padding(
-                    padding: EdgeInsets.only(left: 100),
+                    padding: EdgeInsets.only(left: 110),
                     child: Center(
                     child: Column(
                     mainAxisSize: MainAxisSize.min,
@@ -969,7 +976,7 @@ void clearRepairFields() {
                               child: Icon(Icons.check),
                             ),
                             SizedBox(width: 8),
-                            Text("Cleaning and preventive maintenance", style: TextStyle(fontSize: 15, fontFamily: "Arimo")),
+                            Text("Comprehensive system diagnostics", style: TextStyle(fontSize: 15, fontFamily: "Arimo")),
                           ],
                         ),
 
@@ -985,21 +992,6 @@ void clearRepairFields() {
 
                             SizedBox(width: 8),
                             Text("Repair of faulty components", style: TextStyle(fontSize: 15, fontFamily: "Arimo")),
-                          ],
-                        ),
-
-                      SizedBox(height: 10),
-
-                      Row(
-                          crossAxisAlignment: CrossAxisAlignment.center,
-                          children: [
-                            SizedBox(
-                              width: 24,
-                              child: Icon(Icons.check),
-                            ),
-
-                          SizedBox(width: 8),
-                          Text("Performance inspection and testing",style: TextStyle(fontSize: 15, fontFamily: "Arimo")),
                           ],
                         ),
                     ],
@@ -1064,6 +1056,7 @@ void clearRepairFields() {
                     Expanded(
                       flex: 3,
                       child: SingleChildScrollView(
+                        controller: _installationScrollController,
                         child: Form(
                           key: _installationFormKey,
                           child: Column(
@@ -1211,6 +1204,8 @@ void clearRepairFields() {
                                             );
 
                                             iSelectedPrice = (matched['price'] as num).toDouble();
+
+                                            installationFee = (matched['installationFee'] as num?)?.toDouble() ?? 0.0;
                                           });
                                         },
                                     ),
@@ -1415,7 +1410,7 @@ void clearRepairFields() {
                               children: [
                                 Text("AC Price", style: TextStyle(fontSize: 13, fontFamily: "Arimo", color: Colors.grey.shade600)),
                                 Text(
-                                  iSelectedProduct != null ? "₱${iSelectedPrice.toStringAsFixed(0)}" : "₱0",
+                                  iSelectedProduct != null ? "₱${iSelectedPrice.toStringAsFixed(0)}" : "—",
                                   style: TextStyle(fontSize: 13, fontFamily: "Arimo", fontWeight: FontWeight.bold),
                                 ),
                               ],
@@ -1428,7 +1423,7 @@ void clearRepairFields() {
                               children: [
                                 Text("Installation Fee", style: TextStyle(fontSize: 13, fontFamily: "Arimo", color: Colors.grey.shade600)),
                                 Text(
-                                  "₱${installationFee.toStringAsFixed(0)}",
+                                  iSelectedProduct != null ? "₱${installationFee.toStringAsFixed(0)}" : "—",
                                   style: TextStyle(fontSize: 13, fontFamily: "Arimo", fontWeight: FontWeight.bold),
                                 ),
                               ],
@@ -1445,7 +1440,7 @@ void clearRepairFields() {
                                 Text(
                                   iSelectedProduct != null
                                       ? "₱${(iSelectedPrice + installationFee).toStringAsFixed(0)}"
-                                      : "₱${installationFee.toStringAsFixed(0)}",
+                                      : "—",
                                   style: TextStyle(fontSize: 20, fontFamily: "Changa One", color: Color(0xFF013B7A)),
                                 ),
                               ],
@@ -1505,6 +1500,7 @@ void clearRepairFields() {
                         Expanded(
                           flex: 3,
                           child: SingleChildScrollView(
+                            controller: _repairScrollController,
                             child: Form(
                               key: _repairFormKey,
                               child: Column(
@@ -1515,7 +1511,7 @@ void clearRepairFields() {
                                   ),
                                   SizedBox(height: 5),
                                   Center(
-                                    child: Text("Repair & Maintenance", style: TextStyle(fontSize: 18, fontFamily: "Arimo", color: Color(0xFF013B7A), fontWeight: FontWeight.bold)),
+                                    child: Text("Repair", style: TextStyle(fontSize: 18, fontFamily: "Arimo", color: Color(0xFF013B7A), fontWeight: FontWeight.bold)),
                                   ),
                                   SizedBox(height: 10),
                                   Center(
@@ -1644,12 +1640,18 @@ void clearRepairFields() {
                                             );
                                           }).toList(),
                                           onChanged: rSelectedType == null
-                                              ? null
-                                              : (value) {
-                                                  setState(() {
-                                                    rSelectedProduct = value;
-                                                  });
-                                                },
+                                          ? null
+                                          : (value) {
+                                              setState(() {
+                                                rSelectedProduct = value;
+
+                                                final matched = rAllProducts.firstWhere(
+                                                  (p) => p['name'] == value,
+                                                );
+
+                                                repairFee = (matched['repairFee'] as num?)?.toDouble() ?? 0.0;
+                                              });
+                                            },
                                         ),
                                       ),
                                     ],
@@ -1865,9 +1867,8 @@ void clearRepairFields() {
                                   Row(
                                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                                     children: [
-                                      Text("Repair/Maintenance Fee", style: TextStyle(fontSize: 15, fontFamily: "Changa One")),
-                                      Text(
-                                        "₱${repairFee.toStringAsFixed(0)}",
+                                      Text("Repair Fee", style: TextStyle(fontSize: 15, fontFamily: "Changa One")),
+                                      Text( rSelectedProduct != null ? "₱${repairFee.toStringAsFixed(0)}" : "—",
                                         style: TextStyle(fontSize: 20, fontFamily: "Changa One", color: Color(0xFF013B7A)),
                                       ),
                                     ],
