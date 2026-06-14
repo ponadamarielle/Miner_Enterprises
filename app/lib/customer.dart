@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:miner_enterprises/customerpages/homepage.dart';
 import 'package:miner_enterprises/customerpages/services.dart';
 import 'package:miner_enterprises/customerpages/shop_acs.dart';
+import 'package:miner_enterprises/customerpages/chatbot.dart';
 
 class Customer extends StatefulWidget {
   const Customer({super.key});
@@ -99,15 +100,30 @@ class _CustomerState extends State<Customer> {
       ),
       body: getPage(),
   
+      // chatbot
       floatingActionButton: FloatingActionButton(
-        onPressed: () {
-          //chatbox
-        },
-        backgroundColor: Color(0xFF013B7A),
-        child: Icon(Icons.chat_bubble, color: Colors.white),
-      ),
+      onPressed: () {
+        showDialog(
+          context: context,
+          barrierColor: Colors.transparent,
+          builder: (context) {
+            return Align(
+              alignment: Alignment.bottomRight,
+              child: Padding(
+                padding: EdgeInsets.only(bottom: 16, right: 80),
+                child: Material(
+                  color: Colors.transparent,
+                  child: ChatbotSheet(),
+                ),
+              ),
+            );
+          },
+        );
+      },
+      backgroundColor: Color(0xFF013B7A),
+      child: Icon(Icons.chat_bubble, color: Colors.white),
+    ),
 
-      
     );
   }
 }
