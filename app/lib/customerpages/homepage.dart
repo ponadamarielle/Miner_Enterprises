@@ -7,6 +7,18 @@ class Homepage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final screenWidth = MediaQuery.of(context).size.width;
+    final isMobile = screenWidth < 600;
+    final isTablet = screenWidth >= 600 && screenWidth < 1024;
+
+    final titleFontSize = isMobile ? 32.0 : isTablet ? 50.0 : 70.0;
+    final subtitleFontSize = isMobile ? 14.0 : isTablet ? 17.0 : 20.0;
+    final buttonFontSize = isMobile ? 14.0 : 18.0;
+    final titleSpacing = isMobile ? 40.0 : isTablet ? 60.0 : 90.0;
+    final subtitleSpacing = isMobile ? 40.0 : isTablet ? 50.0 : 70.0;
+    final buttonPaddingH = isMobile ? 24.0 : 40.0;
+    final buttonPaddingV = isMobile ? 14.0 : 20.0;
+
     return Scaffold(
       body: Stack(
         children: [
@@ -16,38 +28,59 @@ class Homepage extends StatelessWidget {
               fit: BoxFit.cover,
             ),
           ),
-
           Center(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Text("Welcome to Miner Enterprises, Your\nUltimate Cooling Solution",
-              textAlign: TextAlign.center,
-              style: TextStyle(fontSize: 70, fontFamily: "Changa One"),
+            child: Padding(
+              padding: EdgeInsets.symmetric(horizontal: isMobile ? 24.0 : 40.0),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    "Welcome to Miner Enterprises, Your\nUltimate Cooling Solution",
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      fontSize: titleFontSize,
+                      fontFamily: "Changa One",
+                    ),
+                  ),
+
+                  SizedBox(height: titleSpacing),
+
+                  Text(
+                    "Providing quality air conditioning services to keep you cool all year round!\nFrom installations to repairs and maintenance, we've got you covered.",
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      fontSize: subtitleFontSize,
+                      fontFamily: "Arimo",
+                    ),
+                  ),
+
+                  SizedBox(height: subtitleSpacing),
+
+                  ElevatedButton(
+                    onPressed: onBrowsePressed,
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Color(0xFF013B7A),
+                      elevation: 10,
+                      padding: EdgeInsets.symmetric(
+                        horizontal: buttonPaddingH,
+                        vertical: buttonPaddingV,
+                      ),
+                    ),
+                    child: Text(
+                      "BROWSE AC UNITS",
+                      style: TextStyle(
+                        fontSize: buttonFontSize,
+                        fontFamily: "Changa One",
+                        color: Colors.white,
+                      ),
+                    ),
+                  ),
+                ],
               ),
-
-              SizedBox(height: 90),
-
-              Text("Providing quality air conditioning services to keep you cool all year round!\nFrom installations to repairs and maintenance, we've got you covered.",
-              textAlign: TextAlign.center,
-              style: TextStyle(fontSize: 20, fontFamily: "Arimo"),
-              ),
-
-              SizedBox(height: 70),
-
-              ElevatedButton(
-                onPressed: onBrowsePressed,
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Color(0xFF013B7A), 
-                  elevation: 10, 
-                  padding: EdgeInsets.symmetric(horizontal: 40, vertical: 20)),
-                child: Text("BROWSE AC UNITS", style: TextStyle(fontSize: 18, fontFamily: "Changa One", color: Colors.white))
-              ),
-            ],
-          )
+            ),
           ),
-        ]
-      )
+        ],
+      ),
     );
   }
 }

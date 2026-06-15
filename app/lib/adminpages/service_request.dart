@@ -530,695 +530,708 @@ class _ServiceRequestState extends State<ServiceRequest> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: Color(0xFFF5F6FA),
-      body: Padding(
-        padding: EdgeInsets.symmetric(horizontal: 20, vertical: 15),
-        child: Row(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
+    final screenWidth = MediaQuery.of(context).size.width;
+    final isDesktop = screenWidth >= 1100; 
+
+    Widget listViewPanel = Container(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Padding(
+        padding: EdgeInsets.all(20),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            Text("List View", style: TextStyle(fontSize: 18, fontFamily: "Arimo", fontWeight: FontWeight.bold)),
+            SizedBox(height: 15),
             Expanded(
-              flex: 1,
-              child: Container(
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: Padding(
-                  padding: EdgeInsets.all(20),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text("List View", style: TextStyle(fontSize: 18, fontFamily: "Arimo", fontWeight: FontWeight.bold)),
-                      SizedBox(height: 15),
-                      Expanded(
-                        child: ValueListenableBuilder<Map<String, dynamic>?>(
-                          valueListenable: _selectedEventNotifier,
-                          builder: (context, selectedEvent, _) {
-                            List<Map<String, dynamic>> allEvents = [];
-                            for (var dayEvents in events.values) {
-                              allEvents.addAll(dayEvents);
-                            }
+              child: ValueListenableBuilder<Map<String, dynamic>?>(
+                valueListenable: _selectedEventNotifier,
+                builder: (context, selectedEvent, _) {
+                  List<Map<String, dynamic>> allEvents = [];
+                  for (var dayEvents in events.values) {
+                    allEvents.addAll(dayEvents);
+                  }
 
-                            allEvents.sort((a, b) {
-                              DateTime dateA = (a['date'] as Timestamp).toDate();
-                              DateTime dateB = (b['date'] as Timestamp).toDate();
-                              return dateA.compareTo(dateB); 
-                            });
+                  allEvents.sort((a, b) {
+                    DateTime dateA = (a['date'] as Timestamp).toDate();
+                    DateTime dateB = (b['date'] as Timestamp).toDate();
+                    return dateA.compareTo(dateB); 
+                  });
 
-                            if (allEvents.isEmpty) {
-                              return Center(
-                                child: Text("No requests found.", style: TextStyle(fontFamily: "Arimo", color: Colors.grey)),
-                              );
-                            }
+                  if (allEvents.isEmpty) {
+                    return Center(
+                      child: Text("No requests found.", style: TextStyle(fontFamily: "Arimo", color: Colors.grey)),
+                    );
+                  }
 
-                            return ListView.separated(
-                              itemCount: allEvents.length,
-                              separatorBuilder: (_, _) => Divider(color: Colors.grey.shade200, height: 1),
-                              itemBuilder: (context, index) {
-                                final e = allEvents[index];
-                                final date = (e['date'] as Timestamp).toDate();
-                                final isSelected = selectedEvent?['docId'] == e['docId'];
-                                
-                                return ListTile(
-                                  contentPadding: EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                                  tileColor: isSelected ? Color(0xFFF5F6FA) : Colors.transparent,
-                                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-                                  title: Text(
-                                    e['name'] ?? 'Unknown Client',
-                                    style: TextStyle(
-                                      fontFamily: "Arimo", 
-                                      fontWeight: FontWeight.bold, 
-                                      fontSize: 14, 
-                                      color: isSelected ? Color(0xFF013B7A) : Colors.black
-                                    ),
-                                  ),
-                                  subtitle: Padding(
-                                    padding: const EdgeInsets.only(top: 4.0),
-                                    child: Column(
-                                      crossAxisAlignment: CrossAxisAlignment.start,
-                                      children: [
-                                        Text("${DateFormat('MMM d, yyyy').format(date)} • ${e['time'] ?? ''}", style: TextStyle(fontFamily: "Arimo", fontSize: 12)),
-                                        Text("${e['serviceType'] ?? ''}", style: TextStyle(fontFamily: "Arimo", fontSize: 11, color: Colors.grey.shade700)),
-                                      ],
-                                    ),
-                                  ),
-                                  trailing: Container(
-                                    padding: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                                    decoration: BoxDecoration(
-                                      color: getStatusColor(e['status'] ?? 'Pending').withValues(alpha: 0.1),
-                                      borderRadius: BorderRadius.circular(6),
-                                    ),
-                                    child: Text(
-                                      e['status'] ?? 'Pending',
-                                      style: TextStyle(
-                                        color: getStatusColor(e['status'] ?? 'Pending'),
-                                        fontSize: 10,
-                                        fontWeight: FontWeight.bold,
-                                        fontFamily: "Arimo"
-                                      ),
-                                    ),
-                                  ),
-                                  onTap: () {
-                                    _selectedEventNotifier.value = e;
-                                    setState(() {
-                                      _selectedDay = date;
-                                      _focusedDay = date;
-                                    });
-                                  },
-                                );
-                              },
-                            );
-                          },
+                  return ListView.separated(
+                    itemCount: allEvents.length,
+                    separatorBuilder: (_, _) => Divider(color: Colors.grey.shade200, height: 1),
+                    itemBuilder: (context, index) {
+                      final e = allEvents[index];
+                      final date = (e['date'] as Timestamp).toDate();
+                      final isSelected = selectedEvent?['docId'] == e['docId'];
+                      
+                      return ListTile(
+                        contentPadding: EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                        tileColor: isSelected ? Color(0xFFF5F6FA) : Colors.transparent,
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                        title: Text(
+                          e['name'] ?? 'Unknown Client',
+                          style: TextStyle(
+                            fontFamily: "Arimo", 
+                            fontWeight: FontWeight.bold, 
+                            fontSize: 14, 
+                            color: isSelected ? Color(0xFF013B7A) : Colors.black
+                          ),
                         ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-            ),
-
-            SizedBox(width: 20),
-
-            Expanded(
-              flex: 3,
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text("Calendar View", style: TextStyle(fontSize: 26, fontFamily: "Changa One")),
-                  Row(
-                    crossAxisAlignment: CrossAxisAlignment.center,
-                    children: [
-                      Text("View and manage all service request", style: TextStyle(fontSize: 15, fontFamily: "Arimo")),
-                      SizedBox(width: 515),
-                      Container(
-                          width: 100,
-                          height: 40,
-                          color: Color(0xFF013B7A),
-                          child: Center(
-                            child: Text("Today", style: TextStyle(fontSize: 16, fontFamily: "Arimo", fontWeight: FontWeight.bold, color: Colors.white)))),
-                    ],
-                  ),
-                  SizedBox(height: 10),
-                  Expanded(
-                    child: Container(
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      clipBehavior: Clip.hardEdge,
-                      child: LayoutBuilder(
-                        builder: (context, constraints) {
-                          const double headerHeight = 0;
-                          const double daysOfWeekHeight = 28;
-                          final double availableForRows = constraints.maxHeight - headerHeight - daysOfWeekHeight;
-                          final double rowHeight = availableForRows / 6;
-                          return SizedBox(
-                            height: constraints.maxHeight,
-                            child: TableCalendar(
-                        firstDay: DateTime(
-                          DateTime.now().year,
-                          DateTime.now().month,
-                          1,
-                        ),
-                        lastDay: DateTime.utc(2100, 12, 31),
-                        focusedDay: _focusedDay,
-                        calendarFormat: CalendarFormat.month,
-                        availableCalendarFormats: const {CalendarFormat.month: 'Month'},
-                        rowHeight: rowHeight,
-                        daysOfWeekHeight: daysOfWeekHeight,
-                        selectedDayPredicate: (day) =>
-                            isSameDay(_selectedDay, day),
-                        onDaySelected: (selected, focused) {
-                          final dayEvents = getEvents(selected);
-                          _selectedEventNotifier.value =
-                              dayEvents.isNotEmpty ? dayEvents.first : null;
-                          setState(() {
-                            _selectedDay = selected;
-                            _focusedDay = focused;
-                          });
-                        },
-                        onPageChanged: (focused) {
-                          setState(() => _focusedDay = focused);
-                        },
-                        eventLoader: getEvents,
-                        headerStyle: HeaderStyle(
-                          formatButtonVisible: false,
-                          titleCentered: false,
-                          titleTextStyle: TextStyle(
-                              fontFamily: "Arimo",
-                              fontSize: 20,
-                              fontWeight: FontWeight.bold,
-                              color: Colors.black),
-                        ),
-                        calendarStyle: CalendarStyle(
-                          outsideDaysVisible: true,
-                          isTodayHighlighted: false,
-                          markersMaxCount: 0,
-                          cellMargin: EdgeInsets.zero,
-                          cellPadding: EdgeInsets.zero,
-                        ),
-                        calendarBuilders: CalendarBuilders(
-                          defaultBuilder: (context, day, _) =>
-                              _buildDayCell(context, day, getEvents(day)),
-                          todayBuilder: (context, day, _) =>
-                              _buildDayCell(context, day, getEvents(day)),
-                          selectedBuilder: (context, day, _) =>
-                              _buildDayCell(context, day, getEvents(day)),
-                          outsideBuilder: (context, day, _) =>
-                              _buildDayCell(context, day, getEvents(day)),
-                          markerBuilder: (context, day, events) => SizedBox(),
-                        ),
-                      ),
-                      );
-                        },
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            SizedBox(width: 20),
-            Expanded(
-              flex: 1,
-              child: Container(
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: Padding(
-                  padding: EdgeInsets.only(left: 25, top: 25, right: 5, bottom: 15),
-                  child: ValueListenableBuilder<Map<String, dynamic>?>(
-                    valueListenable: _selectedEventNotifier,
-                    builder: (context, selectedEventVal, _) =>
-                      selectedEventVal == null
-                      ? Container(
-                          alignment: Alignment.center,
-                          child: Text("Select an event", style: TextStyle(color: Colors.grey, fontSize: 15, fontFamily: "Arimo")),
-                        )
-                      : SingleChildScrollView(
+                        subtitle: Padding(
+                          padding: const EdgeInsets.only(top: 4.0),
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              Text("Service Details", style: TextStyle(fontFamily: "Arimo", fontWeight: FontWeight.bold, fontSize: 22)),
-                              Text.rich(TextSpan(
-                                children: [
-                                  TextSpan(text: "Request ID: ", style: TextStyle(fontFamily: "Arimo", fontSize: 15, color: Colors.black)),
-                                  TextSpan(text: "${_selectedEvent?['requestId']}", style: TextStyle(fontFamily: "Arimo", fontSize: 15, color: Color(0xFF013B7A))),
-                                ],
-                              )),
-                              SizedBox(height: 15),
-                              Padding(
-                                padding: EdgeInsets.only(left: 10),
-                                child: Row(
-                                  crossAxisAlignment: CrossAxisAlignment.center,
-                                  children: [
-                                    Icon(Icons.account_circle, color: Color(0xFF013B7A), size: 35),
-                                    SizedBox(width: 15),
-                                    Column(
-                                      crossAxisAlignment:
-                                          CrossAxisAlignment.start,
-                                      children: [
-                                        Text("Client Name", style: TextStyle(fontSize: 12, fontFamily: "Arimo")),
-                                        Text("${_selectedEvent?['name']}", style: TextStyle(fontFamily: "Arimo", fontSize: 12, fontWeight: FontWeight.bold)),
-                                      ],
-                                    ),
-                                  ],
-                                ),
-                              ),
-                              SizedBox(height: 10),
-                              Padding(
-                                padding: EdgeInsets.only(left: 10),
-                                child: Row(
-                                  crossAxisAlignment: CrossAxisAlignment.center,
-                                  children: [
-                                    Icon(Icons.phone_android, color: Color(0xFF013B7A), size: 35),
-                                    SizedBox(width: 15),
-                                    Column(
-                                      crossAxisAlignment: CrossAxisAlignment.start,
-                                      children: [
-                                        Text("Mobile Number",style: TextStyle(fontSize: 12, fontFamily: "Arimo")),
-                                        Text("${_selectedEvent?['mobileNumber']}", style: TextStyle(fontFamily: "Arimo", fontSize: 12, fontWeight: FontWeight.bold)),
-                                      ],
-                                    ),
-                                  ],
-                                ),
-                              ),
-                              SizedBox(height: 10),
-                              Padding(
-                                padding: EdgeInsets.only(left: 10),
-                                child: Row(
-                                  crossAxisAlignment: CrossAxisAlignment.center,
-                                  children: [
-                                    Icon(Icons.email, color: Color(0xFF013B7A), size: 35),
-                                    SizedBox(width: 15),
-                                    Expanded(
-                                      child: Column(
-                                        crossAxisAlignment: CrossAxisAlignment.start,
-                                        children: [
-                                          Text("Email Address", style: TextStyle(fontSize: 12, fontFamily: "Arimo")),
-                                          Text("${_selectedEvent?['email']}", style: TextStyle(fontFamily: "Arimo", fontSize: 12, fontWeight: FontWeight.bold),
-                                            softWrap: true,
-                                            maxLines: null,
-                                            overflow: TextOverflow.visible,
-                                          ),
-                                        ],
-                                      ),
-                                    )
-                                  ],
-                                ),
-                              ),
-                              SizedBox(height: 10),
-                              Padding(
-                                padding: EdgeInsets.only(left: 10),
-                                child: Row(
-                                  crossAxisAlignment: CrossAxisAlignment.center,
-                                  children: [
-                                    Icon(Icons.location_on, color: Color(0xFF013B7A), size: 35),
-                                    SizedBox(width: 15),
-                                    Expanded(
-                                      child: Column(
-                                        crossAxisAlignment: CrossAxisAlignment.start,
-                                        children: [
-                                          Text("Complete Address", style: TextStyle(fontSize: 12, fontFamily: "Arimo")),
-                                          Text("${_selectedEvent?['address']}", style: TextStyle(fontFamily: "Arimo", fontSize: 12, fontWeight: FontWeight.bold),
-                                            softWrap: true,
-                                            maxLines: null,
-                                            overflow: TextOverflow.visible,
-                                          ),
-                                        ],
-                                      ),
-                                    )
-                                  ],
-                                ),
-                              ),
-                              SizedBox(height: 10),
-                              Padding(
-                                padding: EdgeInsets.only(left: 10),
-                                child: Row(
-                                  crossAxisAlignment: CrossAxisAlignment.center,
-                                  children: [
-                                    Icon(Icons.calendar_month, color: Color(0xFF013B7A), size: 35),
-                                    SizedBox(width: 15),
-                                    Column(
-                                      crossAxisAlignment: CrossAxisAlignment.start,
-                                      children: [
-                                        Text("Date", style: TextStyle(fontSize: 12, fontFamily: "Arimo")),
-                                        Text(
-                                          _selectedEvent?['date'] != null
-                                              ? "${DateFormat('MMMM d, yyyy').format((_selectedEvent!['date'] as Timestamp).toDate())} (${DateFormat('EEEE').format((_selectedEvent!['date'] as Timestamp).toDate())})"
-                                              : '',
-                                          style: TextStyle(fontFamily: "Arimo", fontSize: 12, fontWeight: FontWeight.bold),
-                                        ),
-                                      ],
-                                    ),
-                                  ],
-                                ),
-                              ),
-                              SizedBox(height: 10),
-                              Padding(
-                                padding: EdgeInsets.only(left: 10),
-                                child: Row(
-                                  crossAxisAlignment: CrossAxisAlignment.center,
-                                  children: [
-                                    Icon(Icons.access_time, color: Color(0xFF013B7A), size: 35),
-                                    SizedBox(width: 15),
-                                    Column(
-                                      crossAxisAlignment: CrossAxisAlignment.start,
-                                      children: [
-                                        Text("Time", style: TextStyle(fontSize: 12, fontFamily: "Arimo")),
-                                        Text("${_selectedEvent?['time']}", style: TextStyle(fontFamily: "Arimo", fontSize: 12, fontWeight: FontWeight.bold)),
-                                      ],
-                                    ),
-                                  ],
-                                ),
-                              ),
-                              SizedBox(height: 10),
-                              Padding(
-                                padding: EdgeInsets.only(left: 10),
-                                child: Row(
-                                  crossAxisAlignment: CrossAxisAlignment.center,
-                                  children: [
-                                    Icon(Icons.ac_unit, color: Color(0xFF013B7A), size: 35),
-                                    SizedBox(width: 15),
-                                    Column(
-                                      crossAxisAlignment: CrossAxisAlignment.start,
-                                      children: [
-                                        Text("Service Type", style: TextStyle(fontSize: 12, fontFamily: "Arimo")),
-                                        Text("${_selectedEvent?['serviceType']}", style: TextStyle(fontFamily: "Arimo", fontSize: 12, fontWeight: FontWeight.bold)),
-                                      ],
-                                    ),
-                                  ],
-                                ),
-                              ),
-                              SizedBox(height: 10),
-                              Padding(
-                                padding: EdgeInsets.only(left: 10),
-                                child: Row(
-                                  crossAxisAlignment: CrossAxisAlignment.center,
-                                  children: [
-                                    Icon(Icons.engineering, color: Color(0xFF013B7A), size: 35),
-                                    SizedBox(width: 15),
-                                    Column(
-                                      crossAxisAlignment: CrossAxisAlignment.start,
-                                      children: [
-                                        Text("Technician", style: TextStyle(fontSize: 12, fontFamily: "Arimo")),
-                                        Row(
-                                          crossAxisAlignment: CrossAxisAlignment.center,
-                                          children: [
-                                            Text(
-                                              "${_selectedEvent?['technicianId']} - ${_selectedEvent?['technicianName'] ?? 'Unassigned'}",
-                                              style: TextStyle(
-                                                fontFamily: "Arimo",
-                                                fontSize: 12,
-                                                fontWeight: FontWeight.bold,
-                                              ),
-                                              softWrap: true,
-                                              maxLines: null,
-                                              overflow: TextOverflow.visible,
-                                            ),
-                                            SizedBox(width: 15),
-                                            GestureDetector(
-                                              onTap: () => _showReassignDialog(
-                                                  context,
-                                                  _selectedEvent!['docId']),
-                                              child: Icon(Icons.swap_horiz, color: Color(0xFF013B7A), size: 20),
-                                            )
-                                          ],
-                                        )
-                                      ],
-                                    ),
-                                  ],
-                                ),
-                              ),
-                              SizedBox(height: 10),
-                              Padding(
-                                padding: EdgeInsets.only(left: 10),
-                                child: Row(
-                                  crossAxisAlignment: CrossAxisAlignment.center,
-                                  children: [
-                                    Icon(Icons.description, color: Color(0xFF013B7A), size: 35),
-                                    SizedBox(width: 15),
-                                    Expanded(
-                                      child: Column(
-                                        crossAxisAlignment: CrossAxisAlignment.start,
-                                        children: [
-                                          Text("Description", style: TextStyle(fontSize: 12, fontFamily: "Arimo")),
-                                          Text("${_selectedEvent?['description']}", style: TextStyle(fontFamily: "Arimo", fontSize: 12, fontWeight: FontWeight.bold),
-                                            softWrap: true,
-                                            maxLines: null,
-                                            overflow: TextOverflow.visible,
-                                          ),
-                                        ],
-                                      ),
-                                    )
-                                  ],
-                                ),
-                              ),
-                              SizedBox(height: 10),
-                              Padding(
-                                padding: EdgeInsets.only(left: 10),
-                                child: Row(
-                                  crossAxisAlignment: CrossAxisAlignment.center,
-                                  children: [
-                                    Icon(Icons.payments, color: Color(0xFF013B7A), size: 35),
-                                    SizedBox(width: 15),
-                                    Column(
-                                      crossAxisAlignment: CrossAxisAlignment.start,
-                                      children: [
-                                        Text( _selectedEvent?['serviceType'] == 'Installation' ? "Total Price" : "Repair/Maintenance Fee", style: TextStyle(fontSize: 12, fontFamily: "Arimo")),
-                                        Text("₱${NumberFormat('#,##0').format(_selectedEvent?['totalPrice'] ?? 0)}",
-                                          style: TextStyle(
-                                            fontFamily: "Arimo",
-                                            fontSize: 12,
-                                            fontWeight: FontWeight.bold,
-                                            color: Color(0xFF013B7A),
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                  ],
-                                ),
-                              ),
-                              SizedBox(height: 10),
-                              Padding(
-                                padding: EdgeInsets.only(left: 10),
-                                child: Row(
-                                  crossAxisAlignment: CrossAxisAlignment.center,
-                                  children: [
-                                    Icon(Icons.price_check, color: Color(0xFF013B7A), size: 35),
-                                    SizedBox(width: 15),
-                                    Column(
-                                      crossAxisAlignment: CrossAxisAlignment.start,
-                                      children: [
-                                        Text("Payment", style: TextStyle(fontSize: 12, fontFamily: "Arimo")),
-                                        Text((_selectedEvent?['paymentMethod'] ==
-                                                  'GCash')
-                                              ? "${_selectedEvent?['paymentStatus'] ?? 'Paid'} - GCash"
-                                              : "Cash on Service",
-                                          style: TextStyle(fontFamily: "Arimo", fontSize: 12, fontWeight: FontWeight.bold,
-                                          color: (_selectedEvent?['paymentMethod'] ==
-                                                          'GCash' &&
-                                                      _selectedEvent?['paymentStatus'] ==
-                                                          'Unpaid')
-                                                  ? Color(0xFFDC342C)
-                                                  : Color(0xFF2E7D32)),
-                                        ),
-                                      ],
-                                    ),
-                                  ],
-                                ),
-                              ),
-                              SizedBox(height: 10),
-                              Padding(
-                                padding: EdgeInsets.only(left: 10),
-                                child: Row(
-                                  crossAxisAlignment: CrossAxisAlignment.center,
-                                  children: [
-                                    Icon(Icons.pending_actions, color: Color(0xFF013B7A), size: 35),
-                                    SizedBox(width: 15),
-                                    Column(
-                                      crossAxisAlignment: CrossAxisAlignment.start,
-                                      children: [
-                                        Text("Status", style: TextStyle(fontSize: 12, fontFamily: "Arimo")),
-                                        Text(_selectedEvent?['status'] ?? "Pending", style: TextStyle(fontFamily: "Arimo", fontSize: 12, fontWeight: FontWeight.bold, color: getStatusColor( _selectedEvent?['status'] ?? "Pending"))),
-                                      ],
-                                    ),
-                                  ],
-                                ),
-                              ),
-                              SizedBox(height: 20),
-                              Padding(
-                                padding: EdgeInsets.symmetric(horizontal: 10),
-                                child: Column(
-                                  children: [
-                                    Builder(
-                                      builder: (context) {
-                                        final status = _selectedEvent?['status'] ?? 'Pending';
-                                        final docId = _selectedEvent!['docId'];
-
-                                        if (status == 'Pending') {
-                                          return SizedBox(
-                                            width: double.infinity,
-                                            child: ElevatedButton(
-                                              onPressed: () => _updateStatus(docId, 'Approved'),
-                                              style: ElevatedButton.styleFrom(
-                                                padding: EdgeInsets.symmetric(horizontal: 27, vertical: 15),
-                                                tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                                                shape: RoundedRectangleBorder(
-                                                  borderRadius: BorderRadius.circular(12)),
-                                                  backgroundColor: Color(0xFF6A1B9A),
-                                              ),
-                                              child: Row(
-                                                mainAxisSize: MainAxisSize.min,
-                                                children: [
-                                                  Text("Approved", style: TextStyle(fontSize: 15, fontFamily: "Arimo", color: Colors.white)),
-                                                  SizedBox(width: 15),
-                                                  Icon(Icons.timelapse, color: Colors.white),
-                                                ],
-                                              ),
-                                            ),
-                                          );
-                                        } else if (status == 'Approved') {
-                                          return SizedBox(
-                                            width: double.infinity,
-                                            child: ElevatedButton(
-                                              onPressed: () async {
-                                                await moveToHistory(docId, status: 'Completed');
-                                              },
-                                              style: ElevatedButton.styleFrom(
-                                                padding: EdgeInsets.symmetric(horizontal: 27, vertical: 15),
-                                                tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                                                shape: RoundedRectangleBorder(
-                                                borderRadius: BorderRadius.circular(12)),
-                                                backgroundColor: Color(0xFF228B22),
-                                              ),
-                                              child: Row(
-                                                mainAxisSize: MainAxisSize.min,
-                                                children: [
-                                                  Text("Mark as Completed", style: TextStyle(fontSize: 15, fontFamily: "Arimo", color: Colors.white)),
-                                                  SizedBox(width: 15),
-                                                  Icon(Icons.check, color: Colors.white),
-                                                ],
-                                              ),
-                                            ),
-                                          );
-                                        } else {
-                                          return SizedBox(
-                                            width: double.infinity,
-                                            child: ElevatedButton(
-                                              onPressed: null,
-                                              style: ElevatedButton.styleFrom(
-                                                padding: EdgeInsets.symmetric(horizontal: 24, vertical: 15),
-                                                tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                                                disabledBackgroundColor: Colors.grey.shade300,
-                                              ),
-                                              child: Row(
-                                                mainAxisSize: MainAxisSize.min,
-                                                children: [
-                                                  Text("Completed", style: TextStyle(fontSize: 15, fontFamily: "Arimo", color: Colors.grey.shade600, fontWeight: FontWeight.bold)),
-                                                  SizedBox(width: 15),
-                                                  Icon(Icons.check_circle, color: Colors.grey.shade600),
-                                                ],
-                                              ),
-                                            ),
-                                          );
-                                        }
-                                      },
-                                    ),
-                                    SizedBox(height: 10),
-                                    Builder(
-                                      builder: (context) {
-                                        final status =_selectedEvent?['status'] ?? 'Pending';
-                                        final docId = _selectedEvent!['docId'];
-                                        final canCancel = status == 'Pending';
-                                        return SizedBox(
-                                          width: double.infinity,
-                                          child: OutlinedButton(
-                                            onPressed: canCancel
-                                                ? () async {
-                                                    final confirm =
-                                                        await showDialog<bool>(
-                                                      context: context,
-                                                      builder: (ctx) =>
-                                                          AlertDialog(
-                                                        backgroundColor:
-                                                            Colors.white,
-                                                        title: Text("Cancel Request", style: TextStyle(fontFamily: "Changa One")),
-                                                        content: Text("Are you sure you want to cancel this request? It will be moved to history.",style: TextStyle(fontFamily: "Arimo")),
-                                                        actions: [
-                                                          TextButton(
-                                                            onPressed: () =>
-                                                                Navigator.pop(
-                                                                    ctx, false),
-                                                            child: Text("No", style: TextStyle(fontFamily: "Arimo", color: Color(0xFF013B7A))),
-                                                          ),
-                                                          ElevatedButton(
-                                                            onPressed: () =>
-                                                                Navigator.pop(
-                                                                    ctx, true),
-                                                            style: ElevatedButton.styleFrom(
-                                                                backgroundColor:
-                                                                    Color(
-                                                                        0xFFDC342C)),
-                                                            child: Text("Yes, Cancel", style: TextStyle(fontFamily: "Arimo", color: Colors.white)),
-                                                          ),
-                                                        ],
-                                                      ),
-                                                    );
-                                                    if (confirm == true) {
-                                                      final cancelDocId = docId;
-                                                      final cachedEvent = Map<String, dynamic>.from(_selectedEvent!);
-
-                                                      _processingDocIds.add(cancelDocId);
-                                                      _selectedEventNotifier.value = null;
-                                                      setState(() {
-                                                        for (final key in events.keys) {
-                                                          events[key]?.removeWhere((e) => e['docId'] == cancelDocId);
-                                                        }
-                                                        events.removeWhere((key, value) => value.isEmpty);
-                                                      });
-
-                                                      _updateStatus(cancelDocId, 'Cancelled', cachedEvent: cachedEvent).then((_) {
-                                                        moveToHistory(cancelDocId, status: 'Cancelled');
-                                                      });
-                                                    }
-                                                  }
-                                                : null,
-                                            style: OutlinedButton.styleFrom(
-                                              padding: EdgeInsets.symmetric(horizontal: 24, vertical: 15),
-                                              tapTargetSize:MaterialTapTargetSize.shrinkWrap,
-                                              side: BorderSide(color: canCancel ? Color(0xFFDC342C): Colors.grey.shade400, width: 1.5),
-                                              shape: RoundedRectangleBorder(
-                                                borderRadius: BorderRadius.circular(12),
-                                              ),
-                                            ),
-                                            child: Row(
-                                              mainAxisSize: MainAxisSize.min,
-                                              children: [
-                                                Text("Cancel Request",style: TextStyle(fontSize: 15, fontFamily: "Arimo", color: canCancel ? Color(0xFFDC342C) : Colors.grey.shade400)),
-                                                SizedBox(width: 15),
-                                                Icon(Icons.close, color: canCancel ? Color(0xFFDC342C) : Colors.grey.shade400),
-                                              ],
-                                            ),
-                                          ),
-                                        );
-                                      },
-                                    ),
-                                  ],
-                                ),
-                              ),
-                              SizedBox(height: 25),
+                              Text("${DateFormat('MMM d, yyyy').format(date)} • ${e['time'] ?? ''}", style: TextStyle(fontFamily: "Arimo", fontSize: 12)),
+                              Text("${e['serviceType'] ?? ''}", style: TextStyle(fontFamily: "Arimo", fontSize: 11, color: Colors.grey.shade700)),
                             ],
                           ),
                         ),
-                ),
-                    ),  // ValueListenableBuilder
+                        trailing: Container(
+                          padding: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                          decoration: BoxDecoration(
+                            color: getStatusColor(e['status'] ?? 'Pending').withValues(alpha: 0.1),
+                            borderRadius: BorderRadius.circular(6),
+                          ),
+                          child: Text(
+                            e['status'] ?? 'Pending',
+                            style: TextStyle(
+                              color: getStatusColor(e['status'] ?? 'Pending'),
+                              fontSize: 10,
+                              fontWeight: FontWeight.bold,
+                              fontFamily: "Arimo"
+                            ),
+                          ),
+                        ),
+                        onTap: () {
+                          _selectedEventNotifier.value = e;
+                          setState(() {
+                            _selectedDay = date;
+                            _focusedDay = date;
+                          });
+                        },
+                      );
+                    },
+                  );
+                },
               ),
             ),
           ],
         ),
+      ),
+    );
+
+    Widget calendarContainer = Container(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+      ),
+      clipBehavior: Clip.hardEdge,
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          const double headerHeight = 0;
+          const double daysOfWeekHeight = 28;
+          final double availableForRows = constraints.maxHeight - headerHeight - daysOfWeekHeight;
+          final double rowHeight = availableForRows / 6;
+          return SizedBox(
+            height: constraints.maxHeight,
+            child: TableCalendar(
+              firstDay: DateTime(
+                DateTime.now().year,
+                DateTime.now().month,
+                1,
+              ),
+              lastDay: DateTime.utc(2100, 12, 31),
+              focusedDay: _focusedDay,
+              calendarFormat: CalendarFormat.month,
+              availableCalendarFormats: const {CalendarFormat.month: 'Month'},
+              rowHeight: rowHeight,
+              daysOfWeekHeight: daysOfWeekHeight,
+              selectedDayPredicate: (day) =>
+                  isSameDay(_selectedDay, day),
+              onDaySelected: (selected, focused) {
+                final dayEvents = getEvents(selected);
+                _selectedEventNotifier.value =
+                    dayEvents.isNotEmpty ? dayEvents.first : null;
+                setState(() {
+                  _selectedDay = selected;
+                  _focusedDay = focused;
+                });
+              },
+              onPageChanged: (focused) {
+                setState(() => _focusedDay = focused);
+              },
+              eventLoader: getEvents,
+              headerStyle: HeaderStyle(
+                formatButtonVisible: false,
+                titleCentered: false,
+                titleTextStyle: TextStyle(
+                    fontFamily: "Arimo",
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.black),
+              ),
+              calendarStyle: CalendarStyle(
+                outsideDaysVisible: true,
+                isTodayHighlighted: false,
+                markersMaxCount: 0,
+                cellMargin: EdgeInsets.zero,
+                cellPadding: EdgeInsets.zero,
+              ),
+              calendarBuilders: CalendarBuilders(
+                defaultBuilder: (context, day, _) =>
+                    _buildDayCell(context, day, getEvents(day)),
+                todayBuilder: (context, day, _) =>
+                    _buildDayCell(context, day, getEvents(day)),
+                selectedBuilder: (context, day, _) =>
+                    _buildDayCell(context, day, getEvents(day)),
+                outsideBuilder: (context, day, _) =>
+                    _buildDayCell(context, day, getEvents(day)),
+                markerBuilder: (context, day, events) => SizedBox(),
+              ),
+            ),
+          );
+        },
+      ),
+    );
+
+    Widget calendarViewPanel = Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text("Calendar View", style: TextStyle(fontSize: 26, fontFamily: "Changa One")),
+        Row(
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: [
+            Text("View and manage all service request", style: TextStyle(fontSize: 15, fontFamily: "Arimo")),
+            isDesktop ? SizedBox(width: 515) : Spacer(),
+            Container(
+                width: 100,
+                height: 40,
+                color: Color(0xFF013B7A),
+                child: Center(
+                  child: Text("Today", style: TextStyle(fontSize: 16, fontFamily: "Arimo", fontWeight: FontWeight.bold, color: Colors.white)))),
+          ],
+        ),
+        SizedBox(height: 10),
+        isDesktop 
+            ? Expanded(child: calendarContainer)
+            : SizedBox(height: 450, child: calendarContainer),
+      ],
+    );
+
+    Widget detailsViewPanel = Container(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Padding(
+        padding: EdgeInsets.only(left: 25, top: 25, right: 5, bottom: 15),
+        child: ValueListenableBuilder<Map<String, dynamic>?>(
+          valueListenable: _selectedEventNotifier,
+          builder: (context, selectedEventVal, _) =>
+            selectedEventVal == null
+            ? Container(
+                alignment: Alignment.center,
+                child: Text("Select an event", style: TextStyle(color: Colors.grey, fontSize: 15, fontFamily: "Arimo")),
+              )
+            : SingleChildScrollView(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text("Service Details", style: TextStyle(fontFamily: "Arimo", fontWeight: FontWeight.bold, fontSize: 22)),
+                    Text.rich(TextSpan(
+                      children: [
+                        TextSpan(text: "Request ID: ", style: TextStyle(fontFamily: "Arimo", fontSize: 15, color: Colors.black)),
+                        TextSpan(text: "${_selectedEvent?['requestId']}", style: TextStyle(fontFamily: "Arimo", fontSize: 15, color: Color(0xFF013B7A))),
+                      ],
+                    )),
+                    SizedBox(height: 15),
+                    Padding(
+                      padding: EdgeInsets.only(left: 10),
+                      child: Row(
+                        crossAxisAlignment: CrossAxisAlignment.center,
+                        children: [
+                          Icon(Icons.account_circle, color: Color(0xFF013B7A), size: 35),
+                          SizedBox(width: 15),
+                          Column(
+                            crossAxisAlignment:
+                                CrossAxisAlignment.start,
+                            children: [
+                              Text("Client Name", style: TextStyle(fontSize: 12, fontFamily: "Arimo")),
+                              Text("${_selectedEvent?['name']}", style: TextStyle(fontFamily: "Arimo", fontSize: 12, fontWeight: FontWeight.bold)),
+                            ],
+                          ),
+                        ],
+                      ),
+                    ),
+                    SizedBox(height: 10),
+                    Padding(
+                      padding: EdgeInsets.only(left: 10),
+                      child: Row(
+                        crossAxisAlignment: CrossAxisAlignment.center,
+                        children: [
+                          Icon(Icons.phone_android, color: Color(0xFF013B7A), size: 35),
+                          SizedBox(width: 15),
+                          Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text("Mobile Number",style: TextStyle(fontSize: 12, fontFamily: "Arimo")),
+                              Text("${_selectedEvent?['mobileNumber']}", style: TextStyle(fontFamily: "Arimo", fontSize: 12, fontWeight: FontWeight.bold)),
+                            ],
+                          ),
+                        ],
+                      ),
+                    ),
+                    SizedBox(height: 10),
+                    Padding(
+                      padding: EdgeInsets.only(left: 10),
+                      child: Row(
+                        crossAxisAlignment: CrossAxisAlignment.center,
+                        children: [
+                          Icon(Icons.email, color: Color(0xFF013B7A), size: 35),
+                          SizedBox(width: 15),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text("Email Address", style: TextStyle(fontSize: 12, fontFamily: "Arimo")),
+                                Text("${_selectedEvent?['email']}", style: TextStyle(fontFamily: "Arimo", fontSize: 12, fontWeight: FontWeight.bold),
+                                  softWrap: true,
+                                  maxLines: null,
+                                  overflow: TextOverflow.visible,
+                                ),
+                              ],
+                            ),
+                          )
+                        ],
+                      ),
+                    ),
+                    SizedBox(height: 10),
+                    Padding(
+                      padding: EdgeInsets.only(left: 10),
+                      child: Row(
+                        crossAxisAlignment: CrossAxisAlignment.center,
+                        children: [
+                          Icon(Icons.location_on, color: Color(0xFF013B7A), size: 35),
+                          SizedBox(width: 15),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text("Complete Address", style: TextStyle(fontSize: 12, fontFamily: "Arimo")),
+                                Text("${_selectedEvent?['address']}", style: TextStyle(fontFamily: "Arimo", fontSize: 12, fontWeight: FontWeight.bold),
+                                  softWrap: true,
+                                  maxLines: null,
+                                  overflow: TextOverflow.visible,
+                                ),
+                              ],
+                            ),
+                          )
+                        ],
+                      ),
+                    ),
+                    SizedBox(height: 10),
+                    Padding(
+                      padding: EdgeInsets.only(left: 10),
+                      child: Row(
+                        crossAxisAlignment: CrossAxisAlignment.center,
+                        children: [
+                          Icon(Icons.calendar_month, color: Color(0xFF013B7A), size: 35),
+                          SizedBox(width: 15),
+                          Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text("Date", style: TextStyle(fontSize: 12, fontFamily: "Arimo")),
+                              Text(
+                                _selectedEvent?['date'] != null
+                                    ? "${DateFormat('MMMM d, yyyy').format((_selectedEvent!['date'] as Timestamp).toDate())} (${DateFormat('EEEE').format((_selectedEvent!['date'] as Timestamp).toDate())})"
+                                    : '',
+                                style: TextStyle(fontFamily: "Arimo", fontSize: 12, fontWeight: FontWeight.bold),
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
+                    ),
+                    SizedBox(height: 10),
+                    Padding(
+                      padding: EdgeInsets.only(left: 10),
+                      child: Row(
+                        crossAxisAlignment: CrossAxisAlignment.center,
+                        children: [
+                          Icon(Icons.access_time, color: Color(0xFF013B7A), size: 35),
+                          SizedBox(width: 15),
+                          Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text("Time", style: TextStyle(fontSize: 12, fontFamily: "Arimo")),
+                              Text("${_selectedEvent?['time']}", style: TextStyle(fontFamily: "Arimo", fontSize: 12, fontWeight: FontWeight.bold)),
+                            ],
+                          ),
+                        ],
+                      ),
+                    ),
+                    SizedBox(height: 10),
+                    Padding(
+                      padding: EdgeInsets.only(left: 10),
+                      child: Row(
+                        crossAxisAlignment: CrossAxisAlignment.center,
+                        children: [
+                          Icon(Icons.ac_unit, color: Color(0xFF013B7A), size: 35),
+                          SizedBox(width: 15),
+                          Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text("Service Type", style: TextStyle(fontSize: 12, fontFamily: "Arimo")),
+                              Text("${_selectedEvent?['serviceType']}", style: TextStyle(fontFamily: "Arimo", fontSize: 12, fontWeight: FontWeight.bold)),
+                            ],
+                          ),
+                        ],
+                      ),
+                    ),
+                    SizedBox(height: 10),
+                    Padding(
+                      padding: EdgeInsets.only(left: 10),
+                      child: Row(
+                        crossAxisAlignment: CrossAxisAlignment.center,
+                        children: [
+                          Icon(Icons.engineering, color: Color(0xFF013B7A), size: 35),
+                          SizedBox(width: 15),
+                          Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text("Technician", style: TextStyle(fontSize: 12, fontFamily: "Arimo")),
+                              Row(
+                                crossAxisAlignment: CrossAxisAlignment.center,
+                                children: [
+                                  Text(
+                                    "${_selectedEvent?['technicianId']} - ${_selectedEvent?['technicianName'] ?? 'Unassigned'}",
+                                    style: TextStyle(
+                                      fontFamily: "Arimo",
+                                      fontSize: 12,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                    softWrap: true,
+                                    maxLines: null,
+                                    overflow: TextOverflow.visible,
+                                  ),
+                                  SizedBox(width: 15),
+                                  GestureDetector(
+                                    onTap: () => _showReassignDialog(
+                                        context,
+                                        _selectedEvent!['docId']),
+                                    child: Icon(Icons.swap_horiz, color: Color(0xFF013B7A), size: 20),
+                                  )
+                                ],
+                              )
+                            ],
+                          ),
+                        ],
+                      ),
+                    ),
+                    SizedBox(height: 10),
+                    Padding(
+                      padding: EdgeInsets.only(left: 10),
+                      child: Row(
+                        crossAxisAlignment: CrossAxisAlignment.center,
+                        children: [
+                          Icon(Icons.description, color: Color(0xFF013B7A), size: 35),
+                          SizedBox(width: 15),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text("Description", style: TextStyle(fontSize: 12, fontFamily: "Arimo")),
+                                Text("${_selectedEvent?['description']}", style: TextStyle(fontFamily: "Arimo", fontSize: 12, fontWeight: FontWeight.bold),
+                                  softWrap: true,
+                                  maxLines: null,
+                                  overflow: TextOverflow.visible,
+                                ),
+                              ],
+                            ),
+                          )
+                        ],
+                      ),
+                    ),
+                    SizedBox(height: 10),
+                    Padding(
+                      padding: EdgeInsets.only(left: 10),
+                      child: Row(
+                        crossAxisAlignment: CrossAxisAlignment.center,
+                        children: [
+                          Icon(Icons.payments, color: Color(0xFF013B7A), size: 35),
+                          SizedBox(width: 15),
+                          Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text( _selectedEvent?['serviceType'] == 'Installation' ? "Total Price" : "Repair/Maintenance Fee", style: TextStyle(fontSize: 12, fontFamily: "Arimo")),
+                              Text("₱${NumberFormat('#,##0').format(_selectedEvent?['totalPrice'] ?? 0)}",
+                                style: TextStyle(
+                                  fontFamily: "Arimo",
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.bold,
+                                  color: Color(0xFF013B7A),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
+                    ),
+                    SizedBox(height: 10),
+                    Padding(
+                      padding: EdgeInsets.only(left: 10),
+                      child: Row(
+                        crossAxisAlignment: CrossAxisAlignment.center,
+                        children: [
+                          Icon(Icons.price_check, color: Color(0xFF013B7A), size: 35),
+                          SizedBox(width: 15),
+                          Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text("Payment", style: TextStyle(fontSize: 12, fontFamily: "Arimo")),
+                              Text((_selectedEvent?['paymentMethod'] ==
+                                        'GCash')
+                                    ? "${_selectedEvent?['paymentStatus'] ?? 'Paid'} - GCash"
+                                    : "Cash on Service",
+                                style: TextStyle(fontFamily: "Arimo", fontSize: 12, fontWeight: FontWeight.bold,
+                                color: (_selectedEvent?['paymentMethod'] ==
+                                                'GCash' &&
+                                            _selectedEvent?['paymentStatus'] ==
+                                                'Unpaid')
+                                        ? Color(0xFFDC342C)
+                                        : Color(0xFF2E7D32)),
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
+                    ),
+                    SizedBox(height: 10),
+                    Padding(
+                      padding: EdgeInsets.only(left: 10),
+                      child: Row(
+                        crossAxisAlignment: CrossAxisAlignment.center,
+                        children: [
+                          Icon(Icons.pending_actions, color: Color(0xFF013B7A), size: 35),
+                          SizedBox(width: 15),
+                          Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text("Status", style: TextStyle(fontSize: 12, fontFamily: "Arimo")),
+                              Text(_selectedEvent?['status'] ?? "Pending", style: TextStyle(fontFamily: "Arimo", fontSize: 12, fontWeight: FontWeight.bold, color: getStatusColor( _selectedEvent?['status'] ?? "Pending"))),
+                            ],
+                          ),
+                        ],
+                      ),
+                    ),
+                    SizedBox(height: 20),
+                    Padding(
+                      padding: EdgeInsets.symmetric(horizontal: 10),
+                      child: Column(
+                        children: [
+                          Builder(
+                            builder: (context) {
+                              final status = _selectedEvent?['status'] ?? 'Pending';
+                              final docId = _selectedEvent!['docId'];
+
+                              if (status == 'Pending') {
+                                return SizedBox(
+                                  width: double.infinity,
+                                  child: ElevatedButton(
+                                    onPressed: () => _updateStatus(docId, 'Approved'),
+                                    style: ElevatedButton.styleFrom(
+                                      padding: EdgeInsets.symmetric(horizontal: 27, vertical: 15),
+                                      tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                                      shape: RoundedRectangleBorder(
+                                        borderRadius: BorderRadius.circular(12)),
+                                        backgroundColor: Color(0xFF6A1B9A),
+                                    ),
+                                    child: Row(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        Text("Approved", style: TextStyle(fontSize: 15, fontFamily: "Arimo", color: Colors.white)),
+                                        SizedBox(width: 15),
+                                        Icon(Icons.timelapse, color: Colors.white),
+                                      ],
+                                    ),
+                                  ),
+                                );
+                              } else if (status == 'Approved') {
+                                return SizedBox(
+                                  width: double.infinity,
+                                  child: ElevatedButton(
+                                    onPressed: () async {
+                                      await moveToHistory(docId, status: 'Completed');
+                                    },
+                                    style: ElevatedButton.styleFrom(
+                                      padding: EdgeInsets.symmetric(horizontal: 27, vertical: 15),
+                                      tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                                      shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(12)),
+                                      backgroundColor: Color(0xFF228B22),
+                                    ),
+                                    child: Row(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        Text("Mark as Completed", style: TextStyle(fontSize: 15, fontFamily: "Arimo", color: Colors.white)),
+                                        SizedBox(width: 15),
+                                        Icon(Icons.check, color: Colors.white),
+                                      ],
+                                    ),
+                                  ),
+                                );
+                              } else {
+                                return SizedBox(
+                                  width: double.infinity,
+                                  child: ElevatedButton(
+                                    onPressed: null,
+                                    style: ElevatedButton.styleFrom(
+                                      padding: EdgeInsets.symmetric(horizontal: 24, vertical: 15),
+                                      tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                                      disabledBackgroundColor: Colors.grey.shade300,
+                                    ),
+                                    child: Row(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        Text("Completed", style: TextStyle(fontSize: 15, fontFamily: "Arimo", color: Colors.grey.shade600, fontWeight: FontWeight.bold)),
+                                        SizedBox(width: 15),
+                                        Icon(Icons.check_circle, color: Colors.grey.shade600),
+                                      ],
+                                    ),
+                                  ),
+                                );
+                              }
+                            },
+                          ),
+                          SizedBox(height: 10),
+                          Builder(
+                            builder: (context) {
+                              final status =_selectedEvent?['status'] ?? 'Pending';
+                              final docId = _selectedEvent!['docId'];
+                              final canCancel = status == 'Pending';
+                              return SizedBox(
+                                width: double.infinity,
+                                child: OutlinedButton(
+                                  onPressed: canCancel
+                                      ? () async {
+                                          final confirm =
+                                              await showDialog<bool>(
+                                            context: context,
+                                            builder: (ctx) =>
+                                                AlertDialog(
+                                              backgroundColor:
+                                                  Colors.white,
+                                              title: Text("Cancel Request", style: TextStyle(fontFamily: "Changa One")),
+                                              content: Text("Are you sure you want to cancel this request? It will be moved to history.",style: TextStyle(fontFamily: "Arimo")),
+                                              actions: [
+                                                TextButton(
+                                                  onPressed: () =>
+                                                      Navigator.pop(
+                                                          ctx, false),
+                                                  child: Text("No", style: TextStyle(fontFamily: "Arimo", color: Color(0xFF013B7A))),
+                                                ),
+                                                ElevatedButton(
+                                                  onPressed: () =>
+                                                      Navigator.pop(
+                                                          ctx, true),
+                                                  style: ElevatedButton.styleFrom(
+                                                      backgroundColor:
+                                                          Color(
+                                                              0xFFDC342C)),
+                                                  child: Text("Yes, Cancel", style: TextStyle(fontFamily: "Arimo", color: Colors.white)),
+                                                ),
+                                              ],
+                                            ),
+                                          );
+                                          if (confirm == true) {
+                                            final cancelDocId = docId;
+                                            final cachedEvent = Map<String, dynamic>.from(_selectedEvent!);
+
+                                            _processingDocIds.add(cancelDocId);
+                                            _selectedEventNotifier.value = null;
+                                            setState(() {
+                                              for (final key in events.keys) {
+                                                events[key]?.removeWhere((e) => e['docId'] == cancelDocId);
+                                              }
+                                              events.removeWhere((key, value) => value.isEmpty);
+                                            });
+
+                                            _updateStatus(cancelDocId, 'Cancelled', cachedEvent: cachedEvent).then((_) {
+                                              moveToHistory(cancelDocId, status: 'Cancelled');
+                                            });
+                                          }
+                                        }
+                                      : null,
+                                  style: OutlinedButton.styleFrom(
+                                    padding: EdgeInsets.symmetric(horizontal: 24, vertical: 15),
+                                    tapTargetSize:MaterialTapTargetSize.shrinkWrap,
+                                    side: BorderSide(color: canCancel ? Color(0xFFDC342C): Colors.grey.shade400, width: 1.5),
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(12),
+                                    ),
+                                  ),
+                                  child: Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      Text("Cancel Request",style: TextStyle(fontSize: 15, fontFamily: "Arimo", color: canCancel ? Color(0xFFDC342C) : Colors.grey.shade400)),
+                                      SizedBox(width: 15),
+                                      Icon(Icons.close, color: canCancel ? Color(0xFFDC342C) : Colors.grey.shade400),
+                                    ],
+                                  ),
+                                ),
+                              );
+                            },
+                          ),
+                        ],
+                      ),
+                    ),
+                    SizedBox(height: 25),
+                  ],
+                ),
+              ),
+        ),
+      ),
+    );
+
+    return Scaffold(
+      backgroundColor: Color(0xFFF5F6FA),
+      body: Padding(
+        padding: EdgeInsets.symmetric(horizontal: isDesktop ? 20 : 10, vertical: 15),
+        child: isDesktop
+            ? Row(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  Expanded(flex: 1, child: listViewPanel),
+                  SizedBox(width: 20),
+                  Expanded(flex: 3, child: calendarViewPanel),
+                  SizedBox(width: 20),
+                  Expanded(flex: 1, child: detailsViewPanel),
+                ],
+              )
+            : SingleChildScrollView(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    SizedBox(height: 400, child: listViewPanel),
+                    SizedBox(height: 20),
+                    calendarViewPanel,
+                    SizedBox(height: 20),
+                    detailsViewPanel,
+                  ],
+                ),
+              ),
       ),
     );
   }

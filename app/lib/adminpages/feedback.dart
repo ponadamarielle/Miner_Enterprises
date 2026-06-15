@@ -55,19 +55,25 @@ class _FeedbackState extends State<Feedback> {
 
   @override
   Widget build(BuildContext context) {
+    final screenWidth = MediaQuery.of(context).size.width;
+    final isDesktop = screenWidth >= 900;
+
     if (_isSuccess) {
       return Scaffold(
         backgroundColor: Color(0xFFF5F6FA),
         body: Center(
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Icon(Icons.check_circle, color: Color(0xFF2E7D32), size: 80),
-              SizedBox(height: 20),
-              Text("Thank You!", style: TextStyle(fontSize: 28, fontFamily: "Changa One", color: Color(0xFF013B7A))),
-              SizedBox(height: 10),
-              Text("Your feedback helps us improve our service.", style: TextStyle(fontFamily: "Arimo", fontSize: 16)),
-            ],
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 20),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(Icons.check_circle, color: Color(0xFF2E7D32), size: 80),
+                SizedBox(height: 20),
+                Text("Thank You!", textAlign: TextAlign.center, style: TextStyle(fontSize: 28, fontFamily: "Changa One", color: Color(0xFF013B7A))),
+                SizedBox(height: 10),
+                Text("Your feedback helps us improve our service.", textAlign: TextAlign.center, style: TextStyle(fontFamily: "Arimo", fontSize: 16)),
+              ],
+            ),
           ),
         ),
       );
@@ -86,8 +92,8 @@ class _FeedbackState extends State<Feedback> {
       body: Center(
         child: SingleChildScrollView(
           child: Container(
-            width: 400,
-            padding: EdgeInsets.all(30),
+            width: isDesktop ? 400 : (screenWidth > 400 ? 400 : screenWidth * 0.9),
+            padding: EdgeInsets.all(isDesktop ? 30 : 20),
             decoration: BoxDecoration(
               color: Colors.white,
               borderRadius: BorderRadius.circular(12),
@@ -108,7 +114,7 @@ class _FeedbackState extends State<Feedback> {
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: List.generate(5, (index) {
                     return IconButton(
-                      iconSize: 40,
+                      iconSize: isDesktop ? 40 : 35, 
                       icon: Icon(
                         index < _selectedRating ? Icons.star : Icons.star_border,
                         color: index < _selectedRating ? Color(0xFFB85C00) : Colors.grey.shade400,

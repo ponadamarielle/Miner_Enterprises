@@ -83,6 +83,27 @@ Future<String?> _uploadImage(Uint8List imageBytes, String fileName) async {
   }
 }
 
+  Widget _buildResponsiveDialogRow(bool isDesktop, Widget w1, Widget w2) {
+    if (isDesktop) {
+      return Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Expanded(child: w1),
+          SizedBox(width: 10),
+          Expanded(child: w2),
+        ],
+      );
+    }
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        w1,
+        SizedBox(height: 10),
+        w2,
+      ],
+    );
+  }
+
   // add product
   void _addProductDialog() {
     final formKey = GlobalKey<FormState>();
@@ -105,14 +126,78 @@ Future<String?> _uploadImage(Uint8List imageBytes, String fileName) async {
       context: context,
       barrierDismissible: false,
       builder: (context) {
+        final screenWidth = MediaQuery.of(context).size.width;
+        final isDesktop = screenWidth >= 900;
+
         return StatefulBuilder(
           builder: (context, setDialogState) {
+
+            Widget imagePreviewBox = ClipRRect(
+              borderRadius: BorderRadius.circular(4),
+              child: Container(
+                decoration: BoxDecoration(
+                  color: Colors.grey.shade100,
+                  borderRadius: BorderRadius.circular(4),
+                  border: Border.all(color: Colors.grey.shade400),
+                ),
+                child: pickedImage != null
+                    ? Image.memory(pickedImage!, fit: BoxFit.contain)
+                    : Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(Icons.image_outlined,
+                              size: 32, color: Colors.grey.shade400),
+                          SizedBox(height: 4),
+                          Text("No image", style: TextStyle(fontFamily: "Arimo", fontSize: 11, color: Colors.grey.shade400)),
+                        ],
+                      ),
+              ),
+            );
+
+            Widget uploadBox = GestureDetector(
+              onTap: () async {
+                final bytes = await _pickImage();
+                if (bytes != null) {
+                  setDialogState(() {
+                    pickedImage = bytes;
+                    imageError = null;
+                  });
+                }
+              },
+              child: Container(
+                decoration: BoxDecoration(
+                  color: Colors.grey.shade100,
+                  borderRadius: BorderRadius.circular(4),
+                  border: Border.all(color: Colors.grey.shade400),
+                ),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(
+                      pickedImage != null
+                          ? Icons.change_circle_outlined
+                          : Icons.upload_outlined,
+                      size: 32,
+                      color: Colors.grey.shade500,
+                    ),
+                    SizedBox(height: 4),
+                    Text(
+                      pickedImage != null
+                          ? "Change Image"
+                          : "Upload Image",
+                      style: TextStyle(fontFamily: "Arimo", fontSize: 11, color: Colors.grey.shade600),
+                    ),
+                  ],
+                ),
+              ),
+            );
+
             return AlertDialog(
               backgroundColor: Colors.white,
               title: Text("Add Product", style: TextStyle(fontSize: 20, fontFamily: "Changa One")),
 
               content: SizedBox(
-                width: 550,
+                width: isDesktop ? 550 : screenWidth * 0.95,
                 child: Form(
                   key: formKey,
                   child: SingleChildScrollView(
@@ -121,188 +206,164 @@ Future<String?> _uploadImage(Uint8List imageBytes, String fileName) async {
                     children: [
                       SizedBox(height: 10),
 
-                      Row(
-                        children: [
-                          Expanded(
-                            child: TextFormField(
-                              controller: productNameController,
-                              decoration: InputDecoration(
-                                labelText: "Product Name",
-                                labelStyle: TextStyle(fontSize: 15, fontFamily: "Arimo"),
-                                border: OutlineInputBorder(),
-                              ),
-                              validator: (value) {
-                                if (value == null || value.trim().isEmpty) {
-                                  return "Product name is required";
-                                }
-                                return null;
-                              },
-                            ),
+                      _buildResponsiveDialogRow(
+                        isDesktop,
+                        TextFormField(
+                          controller: productNameController,
+                          decoration: InputDecoration(
+                            labelText: "Product Name",
+                            labelStyle: TextStyle(fontSize: 15, fontFamily: "Arimo"),
+                            border: OutlineInputBorder(),
+                          ),
+                          validator: (value) {
+                            if (value == null || value.trim().isEmpty) {
+                              return "Product name is required";
+                            }
+                            return null;
+                          },
+                        ),
+                        DropdownButtonFormField2<String>(
+                          value: selectedType,
+                          isExpanded: true,
+                          decoration: InputDecoration(
+                            labelText: "Type",
+                            labelStyle: TextStyle(fontSize: 15, fontFamily: "Arimo"),
+                            border: OutlineInputBorder(),
                           ),
 
-                          SizedBox(width: 10),
-
-                          Expanded(
-                            child: DropdownButtonFormField2<String>(
-                              value: selectedType,
-                              isExpanded: true,
-                              decoration: InputDecoration(
-                                labelText: "Type",
-                                labelStyle: TextStyle(fontSize: 15, fontFamily: "Arimo"),
-                                border: OutlineInputBorder(),
-                              ),
-
-                              validator: (value) {
-                                if (value == null) {
-                                  return "Type is required";
-                                }
-                                return null;
-                              },
-                              hint: Text("Select Type", style: TextStyle(fontSize: 15, fontFamily: "Arimo")),
-                              items: ["Split Type", "Window Type", "Portable", "Central Air", "Ductless Mini-splits"]
-                                  .map((e) => DropdownMenuItem(
-                                      value: e, child: Text(e)))
-                                  .toList(),
-                              onChanged: (value) {
-                              setDialogState(() {
-                                selectedType = value;
-                              });
-                            },
-                            ),
-                          ),
-                        ],
+                          validator: (value) {
+                            if (value == null) {
+                              return "Type is required";
+                            }
+                            return null;
+                          },
+                          hint: Text("Select Type", style: TextStyle(fontSize: 15, fontFamily: "Arimo")),
+                          items: ["Split Type", "Window Type", "Portable", "Central Air", "Ductless Mini-splits"]
+                              .map((e) => DropdownMenuItem(
+                                  value: e, child: Text(e)))
+                              .toList(),
+                          onChanged: (value) {
+                          setDialogState(() {
+                            selectedType = value;
+                          });
+                        },
+                        ),
                       ),
 
                       SizedBox(height: 20),
 
-                      Row(
-                        children: [
-                          Expanded(
-                            child: TextFormField(
-                              controller: priceController,
-                              inputFormatters: [
-                                FilteringTextInputFormatter.digitsOnly,
-                                TextInputFormatter.withFunction((oldValue, newValue) {
-                                  if (newValue.text.isEmpty) return newValue;
+                      _buildResponsiveDialogRow(
+                        isDesktop,
+                        TextFormField(
+                          controller: priceController,
+                          inputFormatters: [
+                            FilteringTextInputFormatter.digitsOnly,
+                            TextInputFormatter.withFunction((oldValue, newValue) {
+                              if (newValue.text.isEmpty) return newValue;
 
-                                  if (newValue.text.length == 1 && newValue.text == '0') {
-                                    return oldValue;
-                                  }
+                              if (newValue.text.length == 1 && newValue.text == '0') {
+                                return oldValue;
+                              }
 
-                                  return newValue;
-                                }),
-                              ],
-                              decoration: InputDecoration(
-                                labelText: "Price (₱)",
-                                labelStyle: TextStyle(fontSize: 15, fontFamily: "Arimo"),
-                                border: OutlineInputBorder(),
-                              ),
-                              validator: (value) {
-                                if (value == null || value.trim().isEmpty) {
-                                  return "Price is required";
-                                }
-                                return null;
-                              },
-                            ),
+                              return newValue;
+                            }),
+                          ],
+                          decoration: InputDecoration(
+                            labelText: "Price (₱)",
+                            labelStyle: TextStyle(fontSize: 15, fontFamily: "Arimo"),
+                            border: OutlineInputBorder(),
                           ),
+                          validator: (value) {
+                            if (value == null || value.trim().isEmpty) {
+                              return "Price is required";
+                            }
+                            return null;
+                          },
+                        ),
+                        TextFormField(
+                          controller: stockController,
+                          inputFormatters: [
+                            FilteringTextInputFormatter.digitsOnly,
+                            TextInputFormatter.withFunction((oldValue, newValue) {
+                              if (newValue.text.isEmpty) return newValue;
 
-                          SizedBox(width: 10),
+                              if (newValue.text.length == 1 && newValue.text == '0') {
+                                return oldValue;
+                              }
 
-                          Expanded(
-                            child: TextFormField(
-                              controller: stockController,
-                              inputFormatters: [
-                                FilteringTextInputFormatter.digitsOnly,
-                                TextInputFormatter.withFunction((oldValue, newValue) {
-                                  if (newValue.text.isEmpty) return newValue;
-
-                                  if (newValue.text.length == 1 && newValue.text == '0') {
-                                    return oldValue;
-                                  }
-
-                                  return newValue;
-                                }),
-                              ],
-                              decoration: InputDecoration(
-                                labelText: "Stock",
-                                labelStyle: TextStyle(fontSize: 15, fontFamily: "Arimo"),
-                                border: OutlineInputBorder(),
-                              ),
-                              validator: (value) {
-                                if (value == null || value.trim().isEmpty) {
-                                  return "Stock is required";
-                                }
-                                return null;
-                              },
-                            ),
+                              return newValue;
+                            }),
+                          ],
+                          decoration: InputDecoration(
+                            labelText: "Stock",
+                            labelStyle: TextStyle(fontSize: 15, fontFamily: "Arimo"),
+                            border: OutlineInputBorder(),
                           ),
-                        ],
+                          validator: (value) {
+                            if (value == null || value.trim().isEmpty) {
+                              return "Stock is required";
+                            }
+                            return null;
+                          },
+                        ),
                       ),
 
                       SizedBox(height: 20),
 
-                      Row(
-                        children: [
-                          Expanded(
-                            child: TextFormField(
-                              controller: installationFeeController,
-                              inputFormatters: [
-                                FilteringTextInputFormatter.digitsOnly,
-                                TextInputFormatter.withFunction((oldValue, newValue) {
-                                  if (newValue.text.isEmpty) return newValue;
+                      _buildResponsiveDialogRow(
+                        isDesktop,
+                        TextFormField(
+                          controller: installationFeeController,
+                          inputFormatters: [
+                            FilteringTextInputFormatter.digitsOnly,
+                            TextInputFormatter.withFunction((oldValue, newValue) {
+                              if (newValue.text.isEmpty) return newValue;
 
-                                  if (newValue.text.length == 1 && newValue.text == '0') {
-                                    return oldValue;
-                                  }
+                              if (newValue.text.length == 1 && newValue.text == '0') {
+                                return oldValue;
+                              }
 
-                                  return newValue;
-                                }),
-                              ],
-                              decoration: InputDecoration(
-                                labelText: "Installation Fee (₱)",
-                                labelStyle: TextStyle(fontSize: 15, fontFamily: "Arimo"),
-                                border: OutlineInputBorder(),
-                              ),
-                              validator: (value) {
-                                if (value == null || value.trim().isEmpty) {
-                                  return "Installation fee is required";
-                                }
-                                return null;
-                              },
-                            ),
+                              return newValue;
+                            }),
+                          ],
+                          decoration: InputDecoration(
+                            labelText: "Installation Fee (₱)",
+                            labelStyle: TextStyle(fontSize: 15, fontFamily: "Arimo"),
+                            border: OutlineInputBorder(),
                           ),
+                          validator: (value) {
+                            if (value == null || value.trim().isEmpty) {
+                              return "Installation fee is required";
+                            }
+                            return null;
+                          },
+                        ),
+                        TextFormField(
+                          controller: repairFeeController,
+                          inputFormatters: [
+                            FilteringTextInputFormatter.digitsOnly,
+                            TextInputFormatter.withFunction((oldValue, newValue) {
+                              if (newValue.text.isEmpty) return newValue;
 
-                          SizedBox(width: 10),
+                              if (newValue.text.length == 1 && newValue.text == '0') {
+                                return oldValue;
+                              }
 
-                          Expanded(
-                            child: TextFormField(
-                              controller: repairFeeController,
-                              inputFormatters: [
-                                FilteringTextInputFormatter.digitsOnly,
-                                TextInputFormatter.withFunction((oldValue, newValue) {
-                                  if (newValue.text.isEmpty) return newValue;
-
-                                  if (newValue.text.length == 1 && newValue.text == '0') {
-                                    return oldValue;
-                                  }
-
-                                  return newValue;
-                                }),
-                              ],
-                              decoration: InputDecoration(
-                                labelText: "Repair Fee (₱)",
-                                labelStyle: TextStyle(fontSize: 15, fontFamily: "Arimo"),
-                                border: OutlineInputBorder(),
-                              ),
-                              validator: (value) {
-                                if (value == null || value.trim().isEmpty) {
-                                  return "Repair fee is required";
-                                }
-                                return null;
-                              },
-                            ),
+                              return newValue;
+                            }),
+                          ],
+                          decoration: InputDecoration(
+                            labelText: "Repair Fee (₱)",
+                            labelStyle: TextStyle(fontSize: 15, fontFamily: "Arimo"),
+                            border: OutlineInputBorder(),
                           ),
-                        ],
+                          validator: (value) {
+                            if (value == null || value.trim().isEmpty) {
+                              return "Repair fee is required";
+                            }
+                            return null;
+                          },
+                        ),
                       ),
 
                       SizedBox(height: 20),
@@ -327,77 +388,24 @@ Future<String?> _uploadImage(Uint8List imageBytes, String fileName) async {
 
                       SizedBox(height: 20),
 
-                      SizedBox(
-                        height: 176,
-                        child: Row(
-                          children: [
-                            Expanded(
-                              child: ClipRRect(
-                                borderRadius: BorderRadius.circular(4),
-                                child: Container(
-                                  decoration: BoxDecoration(
-                                    color: Colors.grey.shade100,
-                                    borderRadius: BorderRadius.circular(4),
-                                    border: Border.all(color: Colors.grey.shade400),
-                                  ),
-                                  child: pickedImage != null
-                                      ? Image.memory(pickedImage!, fit: BoxFit.contain)
-                                      : Column(
-                                          mainAxisAlignment: MainAxisAlignment.center,
-                                          children: [
-                                            Icon(Icons.image_outlined,
-                                                size: 32, color: Colors.grey.shade400),
-                                            SizedBox(height: 4),
-                                            Text("No image", style: TextStyle(fontFamily: "Arimo", fontSize: 11, color: Colors.grey.shade400)),
-                                          ],
-                                        ),
-                                ),
-                              ),
+                      isDesktop 
+                        ? SizedBox(
+                            height: 176,
+                            child: Row(
+                              children: [
+                                Expanded(child: imagePreviewBox),
+                                SizedBox(width: 10),
+                                Expanded(child: uploadBox),
+                              ],
                             ),
-                            SizedBox(width: 10),
-                            // Upload button box
-                            Expanded(
-                              child: GestureDetector(
-                                onTap: () async {
-                                  final bytes = await _pickImage();
-                                  if (bytes != null) {
-                                    setDialogState(() {
-                                      pickedImage = bytes;
-                                      imageError = null;
-                                    });
-                                  }
-                                },
-                                child: Container(
-                                  decoration: BoxDecoration(
-                                    color: Colors.grey.shade100,
-                                    borderRadius: BorderRadius.circular(4),
-                                    border: Border.all(color: Colors.grey.shade400),
-                                  ),
-                                  child: Column(
-                                    mainAxisAlignment: MainAxisAlignment.center,
-                                    children: [
-                                      Icon(
-                                        pickedImage != null
-                                            ? Icons.change_circle_outlined
-                                            : Icons.upload_outlined,
-                                        size: 32,
-                                        color: Colors.grey.shade500,
-                                      ),
-                                      SizedBox(height: 4),
-                                      Text(
-                                        pickedImage != null
-                                            ? "Change Image"
-                                            : "Upload Image",
-                                        style: TextStyle(fontFamily: "Arimo", fontSize: 11, color: Colors.grey.shade600),
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
+                          )
+                        : Column(
+                            children: [
+                              SizedBox(height: 150, width: double.infinity, child: imagePreviewBox),
+                              SizedBox(height: 10),
+                              SizedBox(height: 80, width: double.infinity, child: uploadBox),
+                            ],
+                          ),
 
                       if (imageError != null) ...[
                               SizedBox(height: 6),
@@ -516,14 +524,71 @@ Future<String?> _uploadImage(Uint8List imageBytes, String fileName) async {
       context: context,
       barrierDismissible: false,
       builder: (context) {
+        final screenWidth = MediaQuery.of(context).size.width;
+        final isDesktop = screenWidth >= 900;
+
         return StatefulBuilder(
           builder: (context, setDialogState) {
+
+            Widget imagePreviewBox = ClipRRect(
+              borderRadius: BorderRadius.circular(4),
+              child: Container(
+                decoration: BoxDecoration(
+                  color: Colors.grey.shade100,
+                  borderRadius: BorderRadius.circular(4),
+                  border: Border.all(color: Colors.grey.shade400),
+                ),
+                child: pickedImage != null
+                    ? Image.memory(pickedImage!, fit: BoxFit.contain)
+                    : (product.imageUrl.isNotEmpty
+                        ? Image.network(product.imageUrl, fit: BoxFit.contain)
+                        : Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Icon(Icons.image_outlined, size: 32, color: Colors.grey.shade400),
+                              SizedBox(height: 4),
+                              Text("No image", style: TextStyle(fontSize: 11, fontFamily: "Arimo", color: Colors.grey.shade400)),
+                            ],
+                          )),
+              ),
+            );
+
+            Widget uploadBox = GestureDetector(
+              onTap: () async {
+                final bytes = await _pickImage();
+                if (bytes != null) {
+                  setDialogState(() => pickedImage = bytes);
+                }
+              },
+              child: Container(
+                decoration: BoxDecoration(
+                  color: Colors.grey.shade100,
+                  borderRadius: BorderRadius.circular(4),
+                  border: Border.all(color: Colors.grey.shade400),
+                ),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(
+                      pickedImage != null
+                          ? Icons.change_circle_outlined
+                          : Icons.upload_outlined,
+                      size: 32,
+                      color: Colors.grey.shade500,
+                    ),
+                    SizedBox(height: 4),
+                    Text("Change Image", style: TextStyle(fontSize: 11, fontFamily: "Arimo", color: Colors.grey.shade600)),
+                  ],
+                ),
+              ),
+            );
+
             return AlertDialog(
               backgroundColor: Colors.white,
               title: Text("Edit Product", style: TextStyle(fontSize: 20, fontFamily: "Changa One")),
 
               content: SizedBox(
-                width: 550,
+                width: isDesktop ? 550 : screenWidth * 0.95,
                 child: Form(
                   key: formKey,
                   child: SingleChildScrollView(
@@ -532,158 +597,134 @@ Future<String?> _uploadImage(Uint8List imageBytes, String fileName) async {
                     children: [
                       SizedBox(height: 10),
 
-                      Row(
-                        children: [
-                          Expanded(
-                            child: TextFormField(
-                              controller: productNameController,
-                              decoration: InputDecoration(
-                                labelText: "Product Name",
-                                labelStyle: TextStyle(fontSize: 15, fontFamily: "Arimo"),
-                                border: OutlineInputBorder(),
-                              ),
-                              validator: (value) {
-                                if (value == null || value.trim().isEmpty) {
-                                  return "Product name is required";
-                                }
-                                return null;
-                              },
-                            ),
+                      _buildResponsiveDialogRow(
+                        isDesktop,
+                        TextFormField(
+                          controller: productNameController,
+                          decoration: InputDecoration(
+                            labelText: "Product Name",
+                            labelStyle: TextStyle(fontSize: 15, fontFamily: "Arimo"),
+                            border: OutlineInputBorder(),
                           ),
-
-                          SizedBox(width: 10),
-
-                          Expanded(
-                            child: DropdownButtonFormField2<String>(
-                              value: dialogType,
-                              isExpanded: true,
-                              decoration: InputDecoration(
-                                labelText: "Type",
-                                labelStyle: TextStyle(fontSize: 15, fontFamily: "Arimo"),
-                                border: OutlineInputBorder(),
-                              ),
-                              items: ["Split Type", "Window Type", "Portable"]
-                                  .map((e) => DropdownMenuItem(
-                                      value: e, child: Text(e)))
-                                  .toList(),
-                              onChanged: (value) {
-                                setDialogState(() {
-                                  dialogType = value!;
-                                });
-                              },
-                            ),
+                          validator: (value) {
+                            if (value == null || value.trim().isEmpty) {
+                              return "Product name is required";
+                            }
+                            return null;
+                          },
+                        ),
+                        DropdownButtonFormField2<String>(
+                          value: dialogType,
+                          isExpanded: true,
+                          decoration: InputDecoration(
+                            labelText: "Type",
+                            labelStyle: TextStyle(fontSize: 15, fontFamily: "Arimo"),
+                            border: OutlineInputBorder(),
                           ),
-                        ],
+                          items: ["Split Type", "Window Type", "Portable"]
+                              .map((e) => DropdownMenuItem(
+                                  value: e, child: Text(e)))
+                              .toList(),
+                          onChanged: (value) {
+                            setDialogState(() {
+                              dialogType = value!;
+                            });
+                          },
+                        ),
                       ),
 
                       SizedBox(height: 20),
 
-                      Row(
-                        children: [
-                          Expanded(
-                            child: TextFormField(
-                              controller: priceController,
-                              inputFormatters: [
-                                FilteringTextInputFormatter.digitsOnly,
-                              ],
-                              decoration: InputDecoration(
-                                labelText: "Price (₱)",
-                                labelStyle: TextStyle(fontSize: 15, fontFamily: "Arimo"),
-                                border: OutlineInputBorder(),
-                              ),
-                              validator: (value) {
-                                if (value == null || value.trim().isEmpty) {
-                                  return "Price is required";
-                                }
-                                return null;
-                              },
-                            ),
+                      _buildResponsiveDialogRow(
+                        isDesktop,
+                        TextFormField(
+                          controller: priceController,
+                          inputFormatters: [
+                            FilteringTextInputFormatter.digitsOnly,
+                          ],
+                          decoration: InputDecoration(
+                            labelText: "Price (₱)",
+                            labelStyle: TextStyle(fontSize: 15, fontFamily: "Arimo"),
+                            border: OutlineInputBorder(),
                           ),
-
-                          SizedBox(width: 10),
-
-                          Expanded(
-                            child: TextFormField(
-                              controller: stockController,
-                              inputFormatters: [
-                                FilteringTextInputFormatter.digitsOnly,
-                              ],
-                              decoration: InputDecoration(
-                                labelText: "Stock",
-                                labelStyle: TextStyle(fontSize: 15, fontFamily: "Arimo"),
-                                border: OutlineInputBorder(),
-                              ),
-                              validator: (value) {
-                                if (value == null || value.trim().isEmpty) {
-                                  return "Stock is required";
-                                }
-                                return null;
-                              },
-                            ),
+                          validator: (value) {
+                            if (value == null || value.trim().isEmpty) {
+                              return "Price is required";
+                            }
+                            return null;
+                          },
+                        ),
+                        TextFormField(
+                          controller: stockController,
+                          inputFormatters: [
+                            FilteringTextInputFormatter.digitsOnly,
+                          ],
+                          decoration: InputDecoration(
+                            labelText: "Stock",
+                            labelStyle: TextStyle(fontSize: 15, fontFamily: "Arimo"),
+                            border: OutlineInputBorder(),
                           ),
-                        ],
+                          validator: (value) {
+                            if (value == null || value.trim().isEmpty) {
+                              return "Stock is required";
+                            }
+                            return null;
+                          },
+                        ),
                       ),
 
                       SizedBox(height: 20),
 
-                      Row(
-                        children: [
-                          Expanded(
-                            child: TextFormField(
-                              controller: installationFeeController,
-                              inputFormatters: [
-                                FilteringTextInputFormatter.digitsOnly,
-                                TextInputFormatter.withFunction((oldValue, newValue) {
-                                  if (newValue.text.isEmpty) return newValue;
-                                  if (newValue.text.length == 1 && newValue.text == '0') {
-                                    return oldValue;
-                                  }
-                                  return newValue;
-                                }),
-                              ],
-                              decoration: InputDecoration(
-                                labelText: "Installation Fee (₱)",
-                                labelStyle: TextStyle(fontSize: 15, fontFamily: "Arimo"),
-                                border: OutlineInputBorder(),
-                              ),
-                              validator: (value) {
-                                if (value == null || value.trim().isEmpty) {
-                                  return "Installation fee is required";
-                                }
-                                return null;
-                              },
-                            ),
+                      _buildResponsiveDialogRow(
+                        isDesktop,
+                        TextFormField(
+                          controller: installationFeeController,
+                          inputFormatters: [
+                            FilteringTextInputFormatter.digitsOnly,
+                            TextInputFormatter.withFunction((oldValue, newValue) {
+                              if (newValue.text.isEmpty) return newValue;
+                              if (newValue.text.length == 1 && newValue.text == '0') {
+                                return oldValue;
+                              }
+                              return newValue;
+                            }),
+                          ],
+                          decoration: InputDecoration(
+                            labelText: "Installation Fee (₱)",
+                            labelStyle: TextStyle(fontSize: 15, fontFamily: "Arimo"),
+                            border: OutlineInputBorder(),
                           ),
-
-                          SizedBox(width: 10),
-
-                          Expanded(
-                            child: TextFormField(
-                              controller: repairFeeController,
-                              inputFormatters: [
-                                FilteringTextInputFormatter.digitsOnly,
-                                TextInputFormatter.withFunction((oldValue, newValue) {
-                                  if (newValue.text.isEmpty) return newValue;
-                                  if (newValue.text.length == 1 && newValue.text == '0') {
-                                    return oldValue;
-                                  }
-                                  return newValue;
-                                }),
-                              ],
-                              decoration: InputDecoration(
-                                labelText: "Repair Fee (₱)",
-                                labelStyle: TextStyle(fontSize: 15, fontFamily: "Arimo"),
-                                border: OutlineInputBorder(),
-                              ),
-                              validator: (value) {
-                                if (value == null || value.trim().isEmpty) {
-                                  return "Repair fee is required";
-                                }
-                                return null;
-                              },
-                            ),
+                          validator: (value) {
+                            if (value == null || value.trim().isEmpty) {
+                              return "Installation fee is required";
+                            }
+                            return null;
+                          },
+                        ),
+                        TextFormField(
+                          controller: repairFeeController,
+                          inputFormatters: [
+                            FilteringTextInputFormatter.digitsOnly,
+                            TextInputFormatter.withFunction((oldValue, newValue) {
+                              if (newValue.text.isEmpty) return newValue;
+                              if (newValue.text.length == 1 && newValue.text == '0') {
+                                return oldValue;
+                              }
+                              return newValue;
+                            }),
+                          ],
+                          decoration: InputDecoration(
+                            labelText: "Repair Fee (₱)",
+                            labelStyle: TextStyle(fontSize: 15, fontFamily: "Arimo"),
+                            border: OutlineInputBorder(),
                           ),
-                        ],
+                          validator: (value) {
+                            if (value == null || value.trim().isEmpty) {
+                              return "Repair fee is required";
+                            }
+                            return null;
+                          },
+                        ),
                       ),
 
                       SizedBox(height: 20),
@@ -702,70 +743,24 @@ Future<String?> _uploadImage(Uint8List imageBytes, String fileName) async {
 
                       SizedBox(height: 20),
 
-                      SizedBox(
-                        height: 218,
-                        child: Row(
-                          children: [
-                            Expanded(
-                              child: ClipRRect(
-                                borderRadius: BorderRadius.circular(4),
-                                child: Container(
-                                  decoration: BoxDecoration(
-                                    color: Colors.grey.shade100,
-                                    borderRadius: BorderRadius.circular(4),
-                                    border: Border.all(color: Colors.grey.shade400),
-                                  ),
-                                  child: pickedImage != null
-                                      ? Image.memory(pickedImage!, fit: BoxFit.contain)
-                                      : (product.imageUrl.isNotEmpty
-                                          ? Image.network(product.imageUrl, fit: BoxFit.contain)
-                                          : Column(
-                                              mainAxisAlignment: MainAxisAlignment.center,
-                                              children: [
-                                                Icon(Icons.image_outlined, size: 32, color: Colors.grey.shade400),
-                                                SizedBox(height: 4),
-                                                Text("No image", style: TextStyle(fontSize: 11, fontFamily: "Arimo", color: Colors.grey.shade400)),
-                                              ],
-                                            )),
-                                ),
-                              ),
+                      isDesktop 
+                        ? SizedBox(
+                            height: 218,
+                            child: Row(
+                              children: [
+                                Expanded(child: imagePreviewBox),
+                                SizedBox(width: 10),
+                                Expanded(child: uploadBox),
+                              ],
                             ),
-                            SizedBox(width: 10),
-
-                            Expanded(
-                              child: GestureDetector(
-                                onTap: () async {
-                                  final bytes = await _pickImage();
-                                  if (bytes != null) {
-                                    setDialogState(() => pickedImage = bytes);
-                                  }
-                                },
-                                child: Container(
-                                  decoration: BoxDecoration(
-                                    color: Colors.grey.shade100,
-                                    borderRadius: BorderRadius.circular(4),
-                                    border: Border.all(color: Colors.grey.shade400),
-                                  ),
-                                  child: Column(
-                                    mainAxisAlignment: MainAxisAlignment.center,
-                                    children: [
-                                      Icon(
-                                        pickedImage != null
-                                            ? Icons.change_circle_outlined
-                                            : Icons.upload_outlined,
-                                        size: 32,
-                                        color: Colors.grey.shade500,
-                                      ),
-                                      SizedBox(height: 4),
-                                      Text("Change Image", style: TextStyle(fontSize: 11, fontFamily: "Arimo", color: Colors.grey.shade600)),
-                                    ],
-                                  ),
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
+                          )
+                        : Column(
+                            children: [
+                              SizedBox(height: 150, width: double.infinity, child: imagePreviewBox),
+                              SizedBox(height: 10),
+                              SizedBox(height: 80, width: double.infinity, child: uploadBox),
+                            ],
+                          ),
 
                       if (isUploading) ...[
                         SizedBox(height: 10),
@@ -876,16 +871,19 @@ Future<String?> _uploadImage(Uint8List imageBytes, String fileName) async {
 
   @override
   Widget build(BuildContext context) {
+    final screenWidth = MediaQuery.of(context).size.width;
+    final isDesktop = screenWidth >= 900;
+
     return Scaffold(
       backgroundColor: Color(0xFFF8F8F8),
 
       body: Padding(
-        padding: EdgeInsetsGeometry.symmetric(horizontal: 80, vertical: 50),
+        padding: EdgeInsets.symmetric(horizontal: isDesktop ? 80 : 20, vertical: isDesktop ? 50 : 20),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Row(
-              mainAxisAlignment: MainAxisAlignment.end,
+              mainAxisAlignment: isDesktop ? MainAxisAlignment.end : MainAxisAlignment.center,
               children: [
                 SizedBox(
                   width: 180,
@@ -900,8 +898,8 @@ Future<String?> _uploadImage(Uint8List imageBytes, String fileName) async {
                       ),
                     ),
                     child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        SizedBox(width: 10),
                         Image.asset('assets/images/add.png',
                             height: 17, width: 17),
                         SizedBox(width: 10),
@@ -916,44 +914,85 @@ Future<String?> _uploadImage(Uint8List imageBytes, String fileName) async {
             SizedBox(height: 25),
 
             // filter
-            Row(
-              mainAxisAlignment: MainAxisAlignment.start,
-              children: [
-                Text("Filter:", style: TextStyle(fontSize: 18, fontFamily: "Changa One")),
+            isDesktop 
+              ? Row(
+                  mainAxisAlignment: MainAxisAlignment.start,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Padding(
+                      padding: const EdgeInsets.only(top: 8.0),
+                      child: Text("Filter:", style: TextStyle(fontSize: 18, fontFamily: "Changa One")),
+                    ),
+                    SizedBox(width: 15),
+                    Expanded(
+                      child: Wrap(
+                        spacing: 10,
+                        runSpacing: 10,
+                        children: filters.map((filter) {
+                          final isSelected = selectedFilter == filter;
 
-                SizedBox(width: 15),
-
-                Wrap(
-                  spacing: 10,
-                  runSpacing: 10,
-                  children: filters.map((filter) {
-                    final isSelected = selectedFilter == filter;
-
-                    return ChoiceChip(
-                      label: Text(filter),
-                      selected: isSelected,
-                      onSelected: (bool selected) {
-                        setState(() {
-                          selectedFilter = filter;
-                        });
-                      },
-                      showCheckmark: false,
-                      selectedColor: Color(0xFF013b7a),
-                      backgroundColor: Colors.white,
-                      labelStyle: TextStyle(
-                        color: isSelected ? Colors.white : Colors.black,
-                        fontSize: 15,
-                        fontFamily: "Arimo"
+                          return ChoiceChip(
+                            label: Text(filter),
+                            selected: isSelected,
+                            onSelected: (bool selected) {
+                              setState(() {
+                                selectedFilter = filter;
+                              });
+                            },
+                            showCheckmark: false,
+                            selectedColor: Color(0xFF013b7a),
+                            backgroundColor: Colors.white,
+                            labelStyle: TextStyle(
+                              color: isSelected ? Colors.white : Colors.black,
+                              fontSize: 15,
+                              fontFamily: "Arimo"
+                            ),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(20),
+                              side: BorderSide(color: Colors.grey.shade300),
+                            ),
+                          );
+                        }).toList(),
                       ),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(20),
-                        side: BorderSide(color: Colors.grey.shade300),
-                      ),
-                    );
-                  }).toList(),
+                    ),
+                  ],
+                )
+              : Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text("Filter:", style: TextStyle(fontSize: 18, fontFamily: "Changa One")),
+                    SizedBox(height: 10),
+                    Wrap(
+                      spacing: 10,
+                      runSpacing: 10,
+                      children: filters.map((filter) {
+                        final isSelected = selectedFilter == filter;
+
+                        return ChoiceChip(
+                          label: Text(filter),
+                          selected: isSelected,
+                          onSelected: (bool selected) {
+                            setState(() {
+                              selectedFilter = filter;
+                            });
+                          },
+                          showCheckmark: false,
+                          selectedColor: Color(0xFF013b7a),
+                          backgroundColor: Colors.white,
+                          labelStyle: TextStyle(
+                            color: isSelected ? Colors.white : Colors.black,
+                            fontSize: 15,
+                            fontFamily: "Arimo"
+                          ),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(20),
+                            side: BorderSide(color: Colors.grey.shade300),
+                          ),
+                        );
+                      }).toList(),
+                    ),
+                  ],
                 ),
-              ],
-            ),
 
             SizedBox(height: 20),
 

@@ -118,10 +118,12 @@ class _ShopAcsState extends State<ShopAcs> {
 
   @override
   Widget build(BuildContext context) {
+    final isDesktop = MediaQuery.of(context).size.width >= 900;
+
     return Container(
       color: Color(0xFFF8F8F8),
       child: Padding(
-        padding: EdgeInsets.symmetric(horizontal: 60, vertical: 30),
+        padding: EdgeInsets.symmetric(horizontal: isDesktop ? 60 : 20, vertical: 30),
         child: Column(
           mainAxisSize: MainAxisSize.max,
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -137,31 +139,33 @@ class _ShopAcsState extends State<ShopAcs> {
                 Text("Filter:", style: TextStyle(fontFamily: "Changa One", fontSize: 16, color: Colors.black87)),
                 SizedBox(width: 12),
 
-                Wrap(
-                  spacing: 10,
-                  runSpacing: 10,
-                  children: _filters.map((filter) {
-                    final isSelected = _selectedFilter == filter;
-                    return ChoiceChip(
-                      label: Text(filter),
-                      selected: isSelected,
-                      showCheckmark: false,
-                      onSelected: (_) => setState(() => _selectedFilter = filter),
-                      selectedColor: Color(0xFF013b7a),
-                      backgroundColor: Colors.white,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(20),
-                        side: BorderSide(
-                          color: isSelected ? Color(0xFF013b7a) : Colors.grey.shade300,
+                Expanded(
+                  child: Wrap(
+                    spacing: 10,
+                    runSpacing: 10,
+                    children: _filters.map((filter) {
+                      final isSelected = _selectedFilter == filter;
+                      return ChoiceChip(
+                        label: Text(filter),
+                        selected: isSelected,
+                        showCheckmark: false,
+                        onSelected: (_) => setState(() => _selectedFilter = filter),
+                        selectedColor: Color(0xFF013b7a),
+                        backgroundColor: Colors.white,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(20),
+                          side: BorderSide(
+                            color: isSelected ? Color(0xFF013b7a) : Colors.grey.shade300,
+                          ),
                         ),
-                      ),
-                  labelStyle: TextStyle(
-                    fontFamily: "Arimo",
-                    fontSize: 13,
-                    color: isSelected ? Colors.white : Colors.black87,
+                        labelStyle: TextStyle(
+                          fontFamily: "Arimo",
+                          fontSize: 13,
+                          color: isSelected ? Colors.white : Colors.black87,
+                        ),
+                      );
+                    }).toList(),
                   ),
-                );
-              }).toList(),
                 ),
               ],
             ),
@@ -389,15 +393,28 @@ class _ProductCard extends StatelessWidget {
 }
 
 // product detail
-class _ProductDetailSheet extends StatelessWidget {
+class _ProductDetailSheet extends StatefulWidget {
   final _Product product;
   final VoidCallback? onInquire;
 
   const _ProductDetailSheet({required this.product, this.onInquire});
 
   @override
+  State<_ProductDetailSheet> createState() => _ProductDetailSheetState();
+}
+
+class _ProductDetailSheetState extends State<_ProductDetailSheet> {
+  final ScrollController _descScrollController = ScrollController();
+
+  @override
+  void dispose() {
+    _descScrollController.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
-    final inStock = product.stockQuantity > 0;
+    final inStock = widget.product.stockQuantity > 0;
 
     return DraggableScrollableSheet(
       initialChildSize: 0.95,
@@ -430,9 +447,9 @@ class _ProductDetailSheet extends StatelessWidget {
                   // image
                   ClipRRect(
                     borderRadius: BorderRadius.circular(12),
-                    child: product.imageUrl.isNotEmpty
+                    child: widget.product.imageUrl.isNotEmpty
                         ? Image.network(
-                            product.imageUrl,
+                            widget.product.imageUrl,
                             height: 280,
                             width: double.infinity,
                             fit: BoxFit.cover,
@@ -458,19 +475,19 @@ class _ProductDetailSheet extends StatelessWidget {
                   SizedBox(height: 20),
 
                   // name
-                  Text(product.name, style: TextStyle(fontFamily: "Changa One", fontSize: 22, color: Colors.black87)),
+                  Text(widget.product.name, style: TextStyle(fontFamily: "Changa One", fontSize: 22, color: Colors.black87)),
 
                   SizedBox(height: 6),
 
                   // category & stock
                   Row(
                     children: [
-                      _badge(product.type, Color(0xFF013b7a),
+                      _badge(widget.product.type, Color(0xFF013b7a),
                           Color(0xFF013b7a).withValues(alpha: 0.1)),
                       SizedBox(width: 8),
                       _badge(
                         inStock
-                            ? '✓ In Stock (${product.stockQuantity})'
+                            ? '✓ In Stock (${widget.product.stockQuantity})'
                             : '✗ Out of Stock',
                         inStock ? Colors.green.shade700 : Colors.red.shade700,
                         inStock ? Colors.green.shade50  : Colors.red.shade50,
@@ -481,19 +498,23 @@ class _ProductDetailSheet extends StatelessWidget {
                   SizedBox(height: 16),
 
                   // price
-                  Text("₱${product.price.toStringAsFixed(0)}", style: const TextStyle(fontFamily: "Changa One", fontSize: 26, color: Color(0xFF013b7a))),
+                  Text("₱${widget.product.price.toStringAsFixed(0)}", style: const TextStyle(fontFamily: "Changa One", fontSize: 26, color: Color(0xFF013b7a))),
 
                   Divider(height: 30),
 
                   // description
                   Text("Description", style: TextStyle(fontFamily: "Changa One", fontSize: 16, color: Colors.black87)),
                   SizedBox(height: 8),
+                  
+                  // Attach the ScrollController to BOTH Scrollbar and SingleChildScrollView
                   ConstrainedBox(
                     constraints: BoxConstraints(maxHeight: 160),
                     child: Scrollbar(
                       thumbVisibility: true,
+                      controller: _descScrollController,
                       child: SingleChildScrollView(
-                        child: Text(product.description.isNotEmpty ? product.description : "No description available.",
+                        controller: _descScrollController,
+                        child: Text(widget.product.description.isNotEmpty ? widget.product.description : "No description available.",
                           style: TextStyle(fontFamily: "Arimo", fontSize: 14, color: Colors.grey.shade700, height: 1.6)),
                       ),
                     ),
@@ -523,7 +544,7 @@ class _ProductDetailSheet extends StatelessWidget {
                 child: ElevatedButton(
                   onPressed: inStock ? () {
                     Navigator.pop(context);
-                    if (onInquire != null) onInquire!();
+                    if (widget.onInquire != null) widget.onInquire!();
                   } : null,
                   style: ElevatedButton.styleFrom(
                     backgroundColor: Color(0xFF013b7a),
@@ -585,7 +606,7 @@ class _InstallationFormDialogState extends State<_InstallationFormDialog> with W
   String? iSelectedTime;
   String? iPaymentMethod;
 
-  static const double installationFee = 500.0;
+  double installationFee = 0.0;
 
   late String? iSelectedProduct;
   late double iSelectedPrice;
@@ -647,8 +668,15 @@ class _InstallationFormDialogState extends State<_InstallationFormDialog> with W
           'name': d['name'] ?? '',
           'price': (d['price'] as num?)?.toDouble() ?? 0.0,
           'type': d['type'] ?? '',
+          'installationFee': (d['installationFee'] as num?)?.toDouble() ?? 0.0,
         };
       }).toList();
+
+      final matched = _allProducts.firstWhere(
+        (p) => p['name'] == iSelectedProduct,
+        orElse: () => {'installationFee': 0.0},
+      );
+      installationFee = (matched['installationFee'] as num?)?.toDouble() ?? 0.0;
     });
   }
 
@@ -1120,14 +1148,370 @@ class _InstallationFormDialogState extends State<_InstallationFormDialog> with W
     }
   }
 
+  Widget _buildResponsiveRow(bool isDesktop, Widget child1, Widget child2) {
+    if (isDesktop) {
+      return Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Expanded(child: child1),
+          const SizedBox(width: 10),
+          Expanded(child: child2),
+        ],
+      );
+    }
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        child1,
+        const SizedBox(height: 10),
+        child2,
+      ],
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
+    final screenWidth = MediaQuery.of(context).size.width;
+    final isDesktop = screenWidth >= 900;
+
+    final formContent = Form(
+      key: _formKey,
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Center(child: Text("Service Request", style: TextStyle(fontSize: 20, fontFamily: "Changa One"))),
+          SizedBox(height: 5),
+          Center(child: Text("Installation", style: TextStyle(fontSize: 18, fontFamily: "Arimo", color: Color(0xFF013B7A), fontWeight: FontWeight.bold))),
+          SizedBox(height: 20),
+
+          // Name and Mobile Row
+          _buildResponsiveRow(
+            isDesktop,
+            TextFormField(
+              controller: iNameController,
+              inputFormatters: [
+                FilteringTextInputFormatter.allow(RegExp(r'[a-zA-Z\s]')),
+              ],
+              decoration: InputDecoration(
+                labelText: "Name",
+                labelStyle: TextStyle(fontSize: 15, fontFamily: "Arimo"),
+                border: OutlineInputBorder(),
+              ),
+              validator: (value) {
+                if (value == null || value.trim().isEmpty) return "Name is required";
+                return null;
+              },
+            ),
+            TextFormField(
+              controller: iMobileController,
+              keyboardType: TextInputType.number,
+              inputFormatters: [
+                FilteringTextInputFormatter.digitsOnly,
+                LengthLimitingTextInputFormatter(11),
+              ],
+              decoration: InputDecoration(
+                labelText: "Mobile Number",
+                labelStyle: TextStyle(fontSize: 15, fontFamily: "Arimo"),
+                border: OutlineInputBorder(),
+              ),
+              validator: (value) {
+                if (value == null || value.trim().isEmpty) return "Mobile number is required";
+                if(value.length != 11) {
+                  return "Mobile Number must be 11 digits";
+                }
+                if(!RegExp(r'^09\d{9}$').hasMatch(value)){
+                  return "Enter a valid mobile number";
+                }
+                return null;
+              },
+            ),
+          ),
+
+          SizedBox(height: 10),
+
+          // Email
+          TextFormField(
+            controller: iEmailController,
+            keyboardType: TextInputType.emailAddress,
+            decoration: InputDecoration(
+              labelText: "Email Address",
+              labelStyle: TextStyle(fontSize: 15, fontFamily: "Arimo"),
+              border: OutlineInputBorder(),
+            ),
+            validator: (value) {
+              if (value == null || value.trim().isEmpty) return "Email is required";
+              if (!RegExp(r'^[\w\.-]+@gmail\.com$').hasMatch(value.trim())) return "Invalid Gmail format";
+              return null;
+            },
+          ),
+
+          SizedBox(height: 10),
+
+          // Product Selector
+          DropdownButtonFormField2<String>(
+            value: iSelectedProduct,
+            isExpanded: true,
+            decoration: InputDecoration(
+              labelStyle: TextStyle(fontSize: 15, fontFamily: "Arimo"),
+              border: OutlineInputBorder(),
+            ),
+            validator: (value) {
+              if (value == null) return "Product is required";
+              return null;
+            },
+            hint: Text("Product Name", style: TextStyle(fontSize: 15, fontFamily: "Arimo")),
+            items: _allProducts.map((p) {
+              return DropdownMenuItem<String>(
+                value: p['name'] as String,
+                child: Text(p['name'] as String, style: TextStyle(fontSize: 15, fontFamily: "Arimo")),
+              );
+            }).toList(),
+            onChanged: (value) {
+              setState(() {
+                iSelectedProduct = value;
+                final matched = _allProducts.firstWhere(
+                  (p) => p['name'] == value,
+                  orElse: () => {'price': 0.0, 'installationFee': 0.0},
+                );
+                iSelectedPrice = (matched['price'] as num).toDouble();
+                installationFee = (matched['installationFee'] as num?)?.toDouble() ?? 0.0;
+              });
+            },
+          ),
+
+          SizedBox(height: 10),
+
+          // Date and Time Row
+          _buildResponsiveRow(
+            isDesktop,
+            TextFormField(
+              controller: iDateController,
+              readOnly: true,
+              decoration: InputDecoration(
+                labelText: "Preferred Date",
+                labelStyle: TextStyle(fontSize: 15, fontFamily: "Arimo"),
+                border: OutlineInputBorder(),
+                suffixIcon: Icon(Icons.calendar_today),
+              ),
+              validator: (value) {
+                if (value == null || value.isEmpty) return "Date is required";
+                return null;
+              },
+              onTap: () async {
+                DateTime? pickedDate = await showDatePicker(
+                  context: context,
+                  initialDate: DateTime.now(),
+                  firstDate: DateTime.now(),
+                  lastDate: DateTime(2100),
+                );
+                if (pickedDate != null) {
+                  setState(() {
+                    iDateController.text = "${pickedDate.month}/${pickedDate.day}/${pickedDate.year}";
+                    iSelectedTime = null;
+                  });
+                  await _fetchFullyBookedTimes(pickedDate);
+                }
+              },
+            ),
+            DropdownButtonFormField2<String>(
+              value: iSelectedTime,
+              isExpanded: true,
+              decoration: InputDecoration(
+                labelStyle: TextStyle(fontSize: 15, fontFamily: "Arimo"),
+                border: OutlineInputBorder(),
+              ),
+              validator: (value) {
+                if (value == null) return "Time is required";
+                return null;
+              },
+              hint: Text("Preferred Time", style: TextStyle(fontSize: 15, fontFamily: "Arimo")),
+              items: _getAvailableTimes().map((e) => DropdownMenuItem(value: e, child: Text(e))).toList(),
+              onChanged: (value) {
+                setState(() {
+                  iSelectedTime = value;
+                });
+              },
+            ),
+          ),
+
+          SizedBox(height: 10),
+
+          // Address
+          TextFormField(
+            controller: iAddressController,
+            decoration: InputDecoration(
+              labelText: "Complete Address",
+              labelStyle: TextStyle(fontSize: 15, fontFamily: "Arimo"),
+              border: OutlineInputBorder(),
+            ),
+            validator: (value) {
+              if (value == null || value.trim().isEmpty) return "Address is required";
+              return null;
+            },
+          ),
+
+          SizedBox(height: 10),
+
+          // Payment Method
+          DropdownButtonFormField2<String>(
+            value: iPaymentMethod,
+            isExpanded: true,
+            decoration: InputDecoration(
+              labelStyle: TextStyle(fontSize: 15, fontFamily: "Arimo"),
+              border: OutlineInputBorder(),
+            ),
+            validator: (value) {
+              if (value == null) return "Payment method is required";
+              return null;
+            },
+            hint: Text("Payment Method", style: TextStyle(fontSize: 15, fontFamily: "Arimo")),
+            items: ["Cash on Service", "GCash"].map((e) => DropdownMenuItem(value: e, child: Text(e))).toList(),
+            onChanged: (value) {
+              setState(() {
+                iPaymentMethod = value;
+              });
+            },
+          ),
+
+          SizedBox(height: 15),
+
+          Wrap(
+            alignment: WrapAlignment.center,
+            children: const [
+              Icon(Icons.mail, size: 20),
+              SizedBox(width: 10),
+              Text("All receipt and technician updates will be sent to your email.", style: TextStyle(fontSize: 13, fontFamily: "Arimo")),
+            ],
+          ),
+
+          SizedBox(height: 15),
+
+          // Submit Button
+          SizedBox(
+            width: double.maxFinite,
+            height: 45,
+            child: ElevatedButton(
+              onPressed: _submit,
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Color(0xFF013B7A),
+                elevation: 8,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.zero,
+                ),
+              ),
+              child: isLoading
+                  ? SizedBox(
+                      height: 20,
+                      width: 20,
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    )
+                  : Text("SUBMIT", style: TextStyle(fontSize: 13, fontFamily: "Arimo", color: Colors.white, fontWeight: FontWeight.w700)),
+            ),
+          ),
+        ],
+      ),
+    );
+
+    final summaryContent = Container(
+      padding: EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: Color(0xFFF5F6FA),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: Colors.grey.shade200),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
+        children: [
+
+          Text("Order Summary", style: TextStyle(fontSize: 16, fontFamily: "Changa One", color: Color(0xFF013B7A))),
+          SizedBox(height: 16),
+          Divider(),
+          SizedBox(height: 12),
+
+          Text("Product", style: TextStyle(fontSize: 12, fontFamily: "Arimo", color: Colors.grey.shade600)),
+          SizedBox(height: 4),
+          Text(
+            iSelectedProduct ?? "—",
+            style: TextStyle(fontSize: 14, fontFamily: "Arimo", fontWeight: FontWeight.bold),
+          ),
+
+          SizedBox(height: 16),
+
+          Text("Type", style: TextStyle(fontSize: 12, fontFamily: "Arimo", color: Colors.grey.shade600)),
+          SizedBox(height: 4),
+          Text(
+            () {
+              if (iSelectedProduct == null) return "—";
+              final matched = _allProducts.firstWhere(
+                (p) => p['name'] == iSelectedProduct,
+                orElse: () => {'type': widget.product.type},
+              );
+              return matched['type'] as String? ?? "—";
+            }(),
+            style: TextStyle(fontSize: 14, fontFamily: "Arimo", fontWeight: FontWeight.bold),
+          ),
+
+          SizedBox(height: 16),
+
+          Text("Payment Method", style: TextStyle(fontSize: 12, fontFamily: "Arimo", color: Colors.grey.shade600)),
+          SizedBox(height: 4),
+          Text(
+            iPaymentMethod ?? "—",
+            style: TextStyle(fontSize: 14, fontFamily: "Arimo", fontWeight: FontWeight.bold),
+          ),
+
+          SizedBox(height: 16),
+
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text("AC Price", style: TextStyle(fontSize: 13, fontFamily: "Arimo", color: Colors.grey.shade600)),
+              Text(
+                "₱${iSelectedPrice.toStringAsFixed(0)}",
+                style: TextStyle(fontSize: 13, fontFamily: "Arimo", fontWeight: FontWeight.bold),
+              ),
+            ],
+          ),
+
+          SizedBox(height: 10),
+
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text("Installation Fee", style: TextStyle(fontSize: 13, fontFamily: "Arimo", color: Colors.grey.shade600)),
+              Text(
+                "₱${installationFee.toStringAsFixed(0)}",
+                style: TextStyle(fontSize: 13, fontFamily: "Arimo", fontWeight: FontWeight.bold),
+              ),
+            ],
+          ),
+
+          SizedBox(height: 20),
+          Divider(),
+          SizedBox(height: 12),
+
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text("Total Price", style: TextStyle(fontSize: 15, fontFamily: "Changa One")),
+              Text(
+                "₱${(iSelectedPrice + installationFee).toStringAsFixed(0)}",
+                style: TextStyle(fontSize: 20, fontFamily: "Changa One", color: Color(0xFF013B7A)),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+
     return Dialog(
       backgroundColor: Colors.transparent,
-      insetPadding: EdgeInsets.symmetric(horizontal: 40, vertical: 24),
+      insetPadding: EdgeInsets.symmetric(horizontal: isDesktop ? 40 : 16, vertical: 24),
       child: Center(
         child: Container(
-          width: 900,
+          width: isDesktop ? 900 : screenWidth * 0.95,
           constraints: BoxConstraints(
             maxHeight: MediaQuery.of(context).size.height * 0.9,
           ),
@@ -1148,364 +1532,38 @@ class _InstallationFormDialogState extends State<_InstallationFormDialog> with W
                 ),
               ),
 
-              Padding(
-                padding: EdgeInsets.all(30),
-                child: Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-
-                    Expanded(
-                      flex: 3,
-                      child: SingleChildScrollView(
-                        child: Form(
-                          key: _formKey,
+              Positioned.fill(
+                top: 40,
+                child: Padding(
+                  padding: EdgeInsets.all(isDesktop ? 30 : 20),
+                  child: isDesktop
+                      ? Row(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Expanded(
+                              flex: 3,
+                              child: SingleChildScrollView(child: formContent),
+                            ),
+                            SizedBox(width: 30),
+                            Expanded(
+                              flex: 2,
+                              child: Padding(
+                                padding: EdgeInsets.only(top: 80),
+                                child: summaryContent,
+                              ),
+                            )
+                          ],
+                        )
+                      : SingleChildScrollView(
                           child: Column(
-                            mainAxisSize: MainAxisSize.min,
-                            crossAxisAlignment: CrossAxisAlignment.start,
+                            crossAxisAlignment: CrossAxisAlignment.stretch,
                             children: [
-
-                              Center(child: Text("Service Request", style: TextStyle(fontSize: 20, fontFamily: "Changa One"))),
-                              SizedBox(height: 5),
-                              Center(child: Text("Installation", style: TextStyle(fontSize: 18, fontFamily: "Arimo", color: Color(0xFF013B7A), fontWeight: FontWeight.bold))),
-                              SizedBox(height: 20),
-
-                              Row(
-                                children: [
-                                  Expanded(
-                                    child: TextFormField(
-                                      controller: iNameController,
-                                      inputFormatters: [
-                                        FilteringTextInputFormatter.allow(RegExp(r'[a-zA-Z\s]')),
-                                      ],
-                                      decoration: InputDecoration(
-                                        labelText: "Name",
-                                        labelStyle: TextStyle(fontSize: 15, fontFamily: "Arimo"),
-                                        border: OutlineInputBorder(),
-                                      ),
-                                      validator: (value) {
-                                        if (value == null || value.trim().isEmpty) return "Name is required";
-                                        return null;
-                                      },
-                                    ),
-                                  ),
-                                  SizedBox(width: 10),
-                                  Expanded(
-                                    child: TextFormField(
-                                      controller: iMobileController,
-                                      keyboardType: TextInputType.number,
-                                      inputFormatters: [
-                                        FilteringTextInputFormatter.digitsOnly,
-                                        LengthLimitingTextInputFormatter(11),
-                                      ],
-                                      decoration: InputDecoration(
-                                        labelText: "Mobile Number",
-                                        labelStyle: TextStyle(fontSize: 15, fontFamily: "Arimo"),
-                                        border: OutlineInputBorder(),
-                                      ),
-                                      validator: (value) {
-                                        if (value == null || value.trim().isEmpty) return "Mobile number is required";
-                                        if(value.length != 11) {
-                                          return "Mobile Number must be 11 digits";
-                                        }
-                                        if(!RegExp(r'^09\d{9}$').hasMatch(value)){
-                                          return "Enter a valid mobile number";
-                                        }
-                                        return null;
-                                      },
-                                    ),
-                                  ),
-                                ],
-                              ),
-
-                              SizedBox(height: 10),
-
-                              TextFormField(
-                                controller: iEmailController,
-                                keyboardType: TextInputType.emailAddress,
-                                decoration: InputDecoration(
-                                  labelText: "Email Address",
-                                  labelStyle: TextStyle(fontSize: 15, fontFamily: "Arimo"),
-                                  border: OutlineInputBorder(),
-                                ),
-                                validator: (value) {
-                                  if (value == null || value.trim().isEmpty) return "Email is required";
-                                  if (!RegExp(r'^[\w\.-]+@gmail\.com$').hasMatch(value.trim())) return "Invalid Gmail format";
-                                  return null;
-                                },
-                              ),
-
-                              SizedBox(height: 10),
-
-                              DropdownButtonFormField2<String>(
-                                value: iSelectedProduct,
-                                isExpanded: true,
-                                decoration: InputDecoration(
-                                  labelStyle: TextStyle(fontSize: 15, fontFamily: "Arimo"),
-                                  border: OutlineInputBorder(),
-                                ),
-                                validator: (value) {
-                                  if (value == null) return "Product is required";
-                                  return null;
-                                },
-                                hint: Text("Product Name", style: TextStyle(fontSize: 15, fontFamily: "Arimo")),
-                                items: _allProducts.map((p) {
-                                  return DropdownMenuItem<String>(
-                                    value: p['name'] as String,
-                                    child: Text(p['name'] as String, style: TextStyle(fontSize: 15, fontFamily: "Arimo")),
-                                  );
-                                }).toList(),
-                                onChanged: (value) {
-                                  setState(() {
-                                    iSelectedProduct = value;
-                                    final matched = _allProducts.firstWhere(
-                                      (p) => p['name'] == value,
-                                      orElse: () => {'price': 0.0},
-                                    );
-                                    iSelectedPrice = (matched['price'] as num).toDouble();
-                                  });
-                                },
-                              ),
-
-                              SizedBox(height: 10),
-
-                              Row(
-                                children: [
-                                  Expanded(
-                                    child: TextFormField(
-                                      controller: iDateController,
-                                      readOnly: true,
-                                      decoration: InputDecoration(
-                                        labelText: "Preferred Date",
-                                        labelStyle: TextStyle(fontSize: 15, fontFamily: "Arimo"),
-                                        border: OutlineInputBorder(),
-                                        suffixIcon: Icon(Icons.calendar_today),
-                                      ),
-                                      validator: (value) {
-                                        if (value == null || value.isEmpty) return "Date is required";
-                                        return null;
-                                      },
-                                      onTap: () async {
-                                        DateTime? pickedDate = await showDatePicker(
-                                          context: context,
-                                          initialDate: DateTime.now(),
-                                          firstDate: DateTime.now(),
-                                          lastDate: DateTime(2100),
-                                        );
-                                        if (pickedDate != null) {
-                                          setState(() {
-                                            iDateController.text = "${pickedDate.month}/${pickedDate.day}/${pickedDate.year}";
-                                            iSelectedTime = null;
-                                          });
-                                          await _fetchFullyBookedTimes(pickedDate);
-                                        }
-                                      },
-                                    ),
-                                  ),
-                                  SizedBox(width: 10),
-                                  Expanded(
-                                    child: DropdownButtonFormField2<String>(
-                                      value: iSelectedTime,
-                                      isExpanded: true,
-                                      decoration: InputDecoration(
-                                        labelStyle: TextStyle(fontSize: 15, fontFamily: "Arimo"),
-                                        border: OutlineInputBorder(),
-                                      ),
-                                      validator: (value) {
-                                        if (value == null) return "Time is required";
-                                        return null;
-                                      },
-                                      hint: Text("Preferred Time", style: TextStyle(fontSize: 15, fontFamily: "Arimo")),
-                                      items: _getAvailableTimes().map((e) => DropdownMenuItem(value: e, child: Text(e))).toList(),
-                                      onChanged: (value) {
-                                        setState(() {
-                                          iSelectedTime = value;
-                                        });
-                                      },
-                                    ),
-                                  ),
-                                ],
-                              ),
-
-                              SizedBox(height: 10),
-
-                              TextFormField(
-                                controller: iAddressController,
-                                decoration: InputDecoration(
-                                  labelText: "Complete Address",
-                                  labelStyle: TextStyle(fontSize: 15, fontFamily: "Arimo"),
-                                  border: OutlineInputBorder(),
-                                ),
-                                validator: (value) {
-                                  if (value == null || value.trim().isEmpty) return "Address is required";
-                                  return null;
-                                },
-                              ),
-
-                              SizedBox(height: 10),
-
-                              DropdownButtonFormField2<String>(
-                                value: iPaymentMethod,
-                                isExpanded: true,
-                                decoration: InputDecoration(
-                                  labelStyle: TextStyle(fontSize: 15, fontFamily: "Arimo"),
-                                  border: OutlineInputBorder(),
-                                ),
-                                validator: (value) {
-                                  if (value == null) return "Payment method is required";
-                                  return null;
-                                },
-                                hint: Text("Payment Method", style: TextStyle(fontSize: 15, fontFamily: "Arimo")),
-                                items: ["Cash on Service", "GCash"].map((e) => DropdownMenuItem(value: e, child: Text(e))).toList(),
-                                onChanged: (value) {
-                                  setState(() {
-                                    iPaymentMethod = value;
-                                  });
-                                },
-                              ),
-
-                              SizedBox(height: 15),
-
-                              Center(
-                                child: Row(
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: [
-                                    Icon(Icons.mail, size: 20),
-                                    SizedBox(width: 10),
-                                    Text("All receipt and technician updates will be sent to your email.", style: TextStyle(fontSize: 13, fontFamily: "Arimo")),
-                                  ],
-                                ),
-                              ),
-
-                              SizedBox(height: 15),
-
-                              SizedBox(
-                                width: double.maxFinite,
-                                height: 45,
-                                child: ElevatedButton(
-                                  onPressed: _submit,
-                                  style: ElevatedButton.styleFrom(
-                                    backgroundColor: Color(0xFF013B7A),
-                                    elevation: 8,
-                                    shape: RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.zero,
-                                    ),
-                                  ),
-                                  child: isLoading
-                                      ? SizedBox(
-                                          height: 20,
-                                          width: 20,
-                                          child: CircularProgressIndicator(strokeWidth: 2),
-                                        )
-                                      : Text("SUBMIT", style: TextStyle(fontSize: 13, fontFamily: "Arimo", color: Colors.white, fontWeight: FontWeight.w700)),
-                                ),
-                              ),
+                              formContent,
+                              SizedBox(height: 30),
+                              summaryContent,
                             ],
                           ),
                         ),
-                      ),
-                    ),
-
-                    SizedBox(width: 30),
-
-                    Expanded(
-                    flex: 2,
-                    child: Padding(
-                      padding: EdgeInsets.only(top: 80),
-                      child: Container(
-                        padding: EdgeInsets.all(20),
-                        decoration: BoxDecoration(
-                          color: Color(0xFFF5F6FA),
-                          borderRadius: BorderRadius.circular(16),
-                          border: Border.all(color: Colors.grey.shade200),
-                        ),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-
-                            Text("Order Summary", style: TextStyle(fontSize: 16, fontFamily: "Changa One", color: Color(0xFF013B7A))),
-                            SizedBox(height: 16),
-                            Divider(),
-                            SizedBox(height: 12),
-
-                            Text("Product", style: TextStyle(fontSize: 12, fontFamily: "Arimo", color: Colors.grey.shade600)),
-                            SizedBox(height: 4),
-                            Text(
-                              iSelectedProduct ?? "—",
-                              style: TextStyle(fontSize: 14, fontFamily: "Arimo", fontWeight: FontWeight.bold),
-                            ),
-
-                            SizedBox(height: 16),
-
-                            Text("Type", style: TextStyle(fontSize: 12, fontFamily: "Arimo", color: Colors.grey.shade600)),
-                            SizedBox(height: 4),
-                            Text(
-                              () {
-                                if (iSelectedProduct == null) return "—";
-                                final matched = _allProducts.firstWhere(
-                                  (p) => p['name'] == iSelectedProduct,
-                                  orElse: () => {'type': widget.product.type},
-                                );
-                                return matched['type'] as String? ?? "—";
-                              }(),
-                              style: TextStyle(fontSize: 14, fontFamily: "Arimo", fontWeight: FontWeight.bold),
-                            ),
-
-                            SizedBox(height: 16),
-
-                            Text("Payment Method", style: TextStyle(fontSize: 12, fontFamily: "Arimo", color: Colors.grey.shade600)),
-                            SizedBox(height: 4),
-                            Text(
-                              iPaymentMethod ?? "—",
-                              style: TextStyle(fontSize: 14, fontFamily: "Arimo", fontWeight: FontWeight.bold),
-                            ),
-
-                            SizedBox(height: 16),
-
-                            Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                              children: [
-                                Text("AC Price", style: TextStyle(fontSize: 13, fontFamily: "Arimo", color: Colors.grey.shade600)),
-                                Text(
-                                  "₱${iSelectedPrice.toStringAsFixed(0)}",
-                                  style: TextStyle(fontSize: 13, fontFamily: "Arimo", fontWeight: FontWeight.bold),
-                                ),
-                              ],
-                            ),
-
-                            SizedBox(height: 10),
-
-                            Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                              children: [
-                                Text("Installation Fee", style: TextStyle(fontSize: 13, fontFamily: "Arimo", color: Colors.grey.shade600)),
-                                Text(
-                                  "₱${installationFee.toStringAsFixed(0)}",
-                                  style: TextStyle(fontSize: 13, fontFamily: "Arimo", fontWeight: FontWeight.bold),
-                                ),
-                              ],
-                            ),
-
-                            SizedBox(height: 20),
-                            Divider(),
-                            SizedBox(height: 12),
-
-                            Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                              children: [
-                                Text("Total Price", style: TextStyle(fontSize: 15, fontFamily: "Changa One")),
-                                Text(
-                                  "₱${(iSelectedPrice + installationFee).toStringAsFixed(0)}",
-                                  style: TextStyle(fontSize: 20, fontFamily: "Changa One", color: Color(0xFF013B7A)),
-                                ),
-                              ],
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-                    )
-                  ],
                 ),
               ),
             ],

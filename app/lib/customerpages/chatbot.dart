@@ -28,6 +28,7 @@ class _ChatbotSheetState extends State<ChatbotSheet> {
     'What are your business hours?',
     'What AC brands do you carry?',
     'How do I track my service request?',
+    'Product Recommendation',
   ];
 
   @override
@@ -35,7 +36,7 @@ class _ChatbotSheetState extends State<ChatbotSheet> {
     super.initState();
     _messages.add({
       'role': 'assistant',
-      'content': 'Hello and welcome to Miner Enterprises! 🌬️ How can I assist you today?',
+      'content': 'Hello and welcome to Miner Enterprises! How can I assist you today?',
     });
   }
 
@@ -47,7 +48,20 @@ class _ChatbotSheetState extends State<ChatbotSheet> {
         _messages.add({'role': 'user', 'content': userText});
         _messages.add({
           'role': 'assistant',
-          'content': 'Sure! What seems to be the problem with your AC? 🔧',
+          'content': 'Sure! What seems to be the problem with your AC?',
+        });
+      });
+      _controller.clear();
+      _scrollToBottom();
+      return;
+    }
+
+    if (userText.trim().toLowerCase() == 'product recommendation') {
+      setState(() {
+        _messages.add({'role': 'user', 'content': userText});
+        _messages.add({
+          'role': 'assistant',
+          'content': 'Sure! To help you find the best AC, I have a few quick questions. \n\nFirst, what is the size of the room or space you want to cool?',
         });
       });
       _controller.clear();
@@ -77,7 +91,7 @@ class _ChatbotSheetState extends State<ChatbotSheet> {
           _messages.add({'role': 'user', 'content': userText});
           _messages.add({
             'role': 'assistant',
-            'content': 'Thank you for reaching out to Miner Enterprises! Have a great day! 😊🌬️',
+            'content': 'Thank you for reaching out to Miner Enterprises! Have a great day!',
           });
           _waitingForFollowUp = false;
         });
@@ -90,7 +104,7 @@ class _ChatbotSheetState extends State<ChatbotSheet> {
               _messages.clear();
               _messages.add({
                 'role': 'assistant',
-                'content': 'Hello and welcome to Miner Enterprises! 🌬️ How can I assist you today?',
+                'content': 'Hello and welcome to Miner Enterprises! How can I assist you today?',
               });
               _chatEnded = false;
             });
@@ -121,13 +135,14 @@ class _ChatbotSheetState extends State<ChatbotSheet> {
             {
               'role': 'system',
               'content': '''
-                You are a friendly customer service assistant for Miner Enterprises, an AC services business in the Philippines.
+                CRITICAL SYSTEM INSTRUCTION: You are an ENGLISH-ONLY customer service assistant for Miner Enterprises, an AC services business in the Philippines.
+                You can understand Tagalog/Filipino perfectly, but your output MUST ALWAYS BE 100% ENGLISH. 
+                NEVER output a single word of Tagalog, even if the user speaks Tagalog to you.
 
                 SERVICES OFFERED:
-                - AC Installation – starts at ₱500 (varies by unit size and type)
-                - AC Repair – starts at ₱300 (final cost depends on parts and labor)
-                - AC Maintenance/Cleaning – starts at ₱250 per unit
-                - Note: A technician will provide the exact quote after assessing the unit on-site.
+                - AC Installation – starts at ₱300
+                - AC Repair – starts at ₱650
+                - Note: Service fees may vary depending on the unit size and type.
 
                 BOOKING:
                 - Booking is for customers only — only customers can submit service requests
@@ -168,9 +183,47 @@ class _ChatbotSheetState extends State<ChatbotSheet> {
                 If a customer describes another issue not listed above:
                 → "We're sorry to hear that! Please leave your name and contact number and our team will get back to you as soon as possible."
 
+                PRODUCT RECOMMENDATION LOGIC:
+                If the customer is asking for a product recommendation or describing their space or needs, ask follow-up questions one at a time in this exact order:
+                1. "What is the size of the room or space you want to cool?"
+                2. "What type of room is it?"
+                Only after both answers, give one clear recommendation.
+
+                ROOM SIZE MAPPING — accept any of these formats:
+
+                By sqm:
+                - Up to 15 sqm → Window Type or Portable AC
+                - 15–30 sqm → Split Type AC
+                - 30 sqm and above → Central Air or Ductless Mini-splits
+
+                By sqft:
+                - Up to 160 sqft → Window Type or Portable AC
+                - 160–320 sqft → Split Type AC
+                - 320 sqft and above → Central Air or Ductless Mini-splits
+
+                By description (English or Filipino):
+                - Small / kwarto / maliit na silid / bedroom / study → Window Type or Portable AC
+                - Medium / sala / living room / opisina / medium office → Split Type AC
+                - Large / malaki / bodega / warehouse / commercial / open space → Central Air or Ductless Mini-splits
+
+                By horsepower (if user mentions HP):
+                - 0.5–1.0 HP → small room → Window Type or Portable AC
+                - 1.5–2.0 HP → medium room → Split Type AC
+                - 2.5 HP and above → large space → Central Air or Ductless Mini-splits
+
+                ROOM TYPE OVERRIDES:
+                - Bedroom / sleeping area → Inverter Split Type (quiet and energy-efficient)
+                - Office / commercial → Split Type or Central Air depending on size
+                - Energy saving priority → Inverter type ACs
+
+                If the user's input is ambiguous, ask one clarifying question before recommending.
+                Never list all options at once. Give one clear recommendation only.
+                End by telling them the specific AC type to look for, then direct them to the Shop AC's page to browse units within their budget.
+                Never list specific product names or prices — let the Shop page handle that.
+
                 COMMON QUESTIONS AND ANSWERS:
                 Q: What services do you offer?
-                A: "We offer AC installation, repair, and maintenance services. Visit our Services page to book or learn more!"
+                A: "We offer AC installation and repair services. Visit our Services page to book or learn more!"
 
                 Q: How do I book a service?
                 A: "Booking is easy! Just go to the Services tab on our website, fill out the service request form, and our team will confirm your schedule."
@@ -189,20 +242,18 @@ class _ChatbotSheetState extends State<ChatbotSheet> {
 
                 Q: How much is the service fee?
                 A: "Our service fees are as follows:
-                Installation - starts at ₱500 (varies by unit size and type)
-                Repair - starts at ₱300 (final cost depends on parts and labor)
-                Maintenance/Cleaning - starts at ₱250 per unit
-                Note: A technician will provide the exact quote after assessing your unit on-site."
+                Installation - starts at ₱300
+                Repair - starts at ₱650
+                Note: Service fees may vary depending on the unit size and type."
 
                 RULES:
-                - Only answer questions related to Miner Enterprises and AC services
-                - Always be friendly and professional
-                - CRITICAL RULE — EMOJI: You MUST end EVERY single response with exactly 1 emoji. Place it as the very last character of your message, after the period or sentence. Never skip this. Never put the emoji in the middle of the response. Examples: "...book a repair service. 🔧" or "...check your inbox regularly! 📧"
+                - Only answer questions related to Miner Enterprises and AC services.
+                - Always be friendly and professional.
                 - If you don't know the answer, say: "For more details, please contact us at minerenterprises2911@gmail.com"
-                - Keep responses concise and helpful
-                - Support both English and Filipino depending on how the customer messages
-                - IMPORTANT: Do NOT ask unnecessary follow-up questions. Just answer what the customer asked and stop. Do not ask things like "Would you like a quote?", "Would you like to book?", "Do you want more details?" unless the customer specifically asks for it.
-                - Never prompt the customer to do something they didn't ask about
+                - Keep responses concise and helpful.
+                - IMPORTANT: Do NOT ask unnecessary follow-up questions. Just answer what the customer asked and stop.
+                - Never prompt the customer to do something they didn't ask about.
+                - FINAL REMINDER: YOU ARE STRICTLY ENGLISH-ONLY. NEVER SPEAK TAGALOG OR FILIPINO IN YOUR REPLIES.
                 ''',
             },
             ..._messages.map((m) => {
@@ -328,18 +379,22 @@ class _ChatbotSheetState extends State<ChatbotSheet> {
 
   @override
   Widget build(BuildContext context) {
+    final screenWidth = MediaQuery.of(context).size.width;
+    final screenHeight = MediaQuery.of(context).size.height;
+    final isDesktop = screenWidth >= 900;
+
     final bool showSuggestions =
         _messages.length == 1 && _messages[0]['role'] == 'assistant' && !_chatEnded;
 
     return Container(
-      width: 390,
-      height: 500,
+      width: isDesktop ? 390 : screenWidth * 0.95,
+      height: isDesktop ? 500 : (screenHeight * 0.75 > 500 ? 500 : screenHeight * 0.75),
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.15),
+            color: Colors.black.withValues(alpha: 0.15),
             blurRadius: 20,
             offset: const Offset(0, 8),
           ),

@@ -7,10 +7,13 @@ class Dashboard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final screenWidth = MediaQuery.of(context).size.width;
+    final isDesktop = screenWidth >= 900;
+
     return Scaffold(
       backgroundColor: Color(0xFFF8F8F8),
       body: SingleChildScrollView(
-        padding: EdgeInsets.symmetric(horizontal: 50, vertical: 15),
+        padding: EdgeInsets.symmetric(horizontal: isDesktop ? 50 : 20, vertical: 15),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [ 
@@ -62,45 +65,36 @@ class Dashboard extends StatelessWidget {
                           }
                         }
 
-                        return Row(
-                          children: [
-                            _StatCard(
-                              label: "Total Service Request",
-                              value: totalRequests.toString(),
-                              icon: Icons.receipt_long_outlined,
-                              iconColor: Color(0xFF013B7A),
-                            ),
-                            SizedBox(width: 20),
-                            _StatCard(
-                              label: "Pending Service",
-                              value: pendingRequests.toString(),
-                              icon: Icons.hourglass_top_outlined,
-                              iconColor: Colors.orange,
-                            ),
-                            SizedBox(width: 20),
-                            _StatCard(
-                              label: "Approved Service",
-                              value: approvedRequests.toString(),
-                              icon: Icons.check_circle_outline,
-                              iconColor: Color(0xFF6A1B9A),
-                            ),
-                            SizedBox(width: 20),
-                            _StatCard(
-                              label: "Active Technicians",
-                              value: activeTechnicians.toString(),
-                              icon: Icons.engineering_outlined,
-                              iconColor: Colors.green,
-                            ),
-                            SizedBox(width: 20),
-                            _StatCard(
-                              label: "Total Sales",
-                              value:
-                                  "₱${NumberFormat('#,##0').format(totalSales)}",
-                              icon: Icons.payments_outlined,
-                              iconColor:  Color(0xFF013B7A),
-                            ),
-                          ],
-                        );
+                        if (isDesktop) {
+                          return Row(
+                            children: [
+                              Expanded(child: _StatCard(label: "Total Service Request", value: totalRequests.toString(), icon: Icons.receipt_long_outlined, iconColor: Color(0xFF013B7A))),
+                              SizedBox(width: 20),
+                              Expanded(child: _StatCard(label: "Pending Service", value: pendingRequests.toString(), icon: Icons.hourglass_top_outlined, iconColor: Colors.orange)),
+                              SizedBox(width: 20),
+                              Expanded(child: _StatCard(label: "Approved Service", value: approvedRequests.toString(), icon: Icons.check_circle_outline, iconColor: Color(0xFF6A1B9A))),
+                              SizedBox(width: 20),
+                              Expanded(child: _StatCard(label: "Active Technicians", value: activeTechnicians.toString(), icon: Icons.engineering_outlined, iconColor: Colors.green)),
+                              SizedBox(width: 20),
+                              Expanded(child: _StatCard(label: "Total Sales", value: "₱${NumberFormat('#,##0').format(totalSales)}", icon: Icons.payments_outlined, iconColor:  Color(0xFF013B7A))),
+                            ],
+                          );
+                        } else {
+                          return Column(
+                            crossAxisAlignment: CrossAxisAlignment.stretch,
+                            children: [
+                              _StatCard(label: "Total Service Request", value: totalRequests.toString(), icon: Icons.receipt_long_outlined, iconColor: Color(0xFF013B7A)),
+                              SizedBox(height: 10),
+                              _StatCard(label: "Pending Service", value: pendingRequests.toString(), icon: Icons.hourglass_top_outlined, iconColor: Colors.orange),
+                              SizedBox(height: 10),
+                              _StatCard(label: "Approved Service", value: approvedRequests.toString(), icon: Icons.check_circle_outline, iconColor: Color(0xFF6A1B9A)),
+                              SizedBox(height: 10),
+                              _StatCard(label: "Active Technicians", value: activeTechnicians.toString(), icon: Icons.engineering_outlined, iconColor: Colors.green),
+                              SizedBox(height: 10),
+                              _StatCard(label: "Total Sales", value: "₱${NumberFormat('#,##0').format(totalSales)}", icon: Icons.payments_outlined, iconColor:  Color(0xFF013B7A)),
+                            ],
+                          );
+                        }
                       },
                     );
                   },
@@ -110,14 +104,23 @@ class Dashboard extends StatelessWidget {
 
             SizedBox(height: 25),
 
-            Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Expanded(child: SizedBox(height: 450, child: _RecentRequestsCard())),
-                SizedBox(width: 25),
-                Expanded(child: SizedBox(height: 450, child: _MonthlyRevenueCard())),
-              ],
-            ),
+            isDesktop
+                ? Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Expanded(child: SizedBox(height: 450, child: _RecentRequestsCard())),
+                      SizedBox(width: 25),
+                      Expanded(child: SizedBox(height: 450, child: _MonthlyRevenueCard())),
+                    ],
+                  )
+                : Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      SizedBox(height: 450, child: _RecentRequestsCard()),
+                      SizedBox(height: 25),
+                      SizedBox(height: 450, child: _MonthlyRevenueCard()),
+                    ],
+                  ),
           ],
         ),
       ),
@@ -140,60 +143,58 @@ class _StatCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Expanded(
-      child: Container(
-        height: 130,
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(12),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withValues(alpha: 0.08),
-              blurRadius: 10,
-              offset: const Offset(0, 4),
+    return Container(
+      height: 130,
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.08),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 18),
+      child: Row(
+        children: [
+          Container(
+            width: 48,
+            height: 48,
+            decoration: BoxDecoration(
+              color: iconColor.withValues(alpha: 0.1),
+              borderRadius: BorderRadius.circular(10),
             ),
-          ],
-        ),
-        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 18),
-        child: Row(
-          children: [
-            Container(
-              width: 48,
-              height: 48,
-              decoration: BoxDecoration(
-                color: iconColor.withValues(alpha: 0.1),
-                borderRadius: BorderRadius.circular(10),
-              ),
-              child: Icon(icon, color: iconColor, size: 24),
-            ),
-            const SizedBox(width: 16),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Text(
-                    label,
-                    style: const TextStyle(
-                      fontSize: 12,
-                      fontFamily: "Arimo",
-                      color: Colors.black54,
-                    ),
+            child: Icon(icon, color: iconColor, size: 24),
+          ),
+          const SizedBox(width: 16),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Text(
+                  label,
+                  style: const TextStyle(
+                    fontSize: 12,
+                    fontFamily: "Arimo",
+                    color: Colors.black54,
                   ),
-                  const SizedBox(height: 6),
-                  Text(
-                    value,
-                    style: const TextStyle(
-                      fontSize: 22,
-                      fontFamily: "Changa One",
-                      color: Colors.black87,
-                    ),
+                ),
+                const SizedBox(height: 6),
+                Text(
+                  value,
+                  style: const TextStyle(
+                    fontSize: 22,
+                    fontFamily: "Changa One",
+                    color: Colors.black87,
                   ),
-                ],
-              ),
+                ),
+              ],
             ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }

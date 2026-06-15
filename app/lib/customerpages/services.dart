@@ -796,1100 +796,690 @@ void clearRepairFields() {
   rPaymentMethod = null;
 }
 
+  Widget _buildResponsiveRow(bool isDesktop, Widget child1, Widget child2) {
+    if (isDesktop) {
+      return Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Expanded(child: child1),
+          const SizedBox(width: 10),
+          Expanded(child: child2),
+        ],
+      );
+    }
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        child1,
+        const SizedBox(height: 10),
+        child2,
+      ],
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: Color(0xFFF8F8F8),
+    final screenWidth = MediaQuery.of(context).size.width;
+    final isDesktop = screenWidth >= 900;
+    final cardWidth = isDesktop ? 500.0 : screenWidth * 0.9;
 
+    return Scaffold(
+      backgroundColor: const Color(0xFFF8F8F8),
       body: SizedBox.expand(
         child: Stack(
           children: [
-  
-          Align(
-          alignment: Alignment.topCenter,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-            Padding(
-              padding: EdgeInsets.only(left: 70, top: 50),
-              child: Text("AIR-CONDITIONING  SERVICES", style: TextStyle(fontSize: 25, fontFamily: "Changa One")),
-          ),
-
-          SizedBox(height: 70),
-
-          Center(
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.center,
-            children: [
-              //installation card
-              GestureDetector(
-              onTap: () {
-                setState(() {
-                  showInstallationForm = true;
-                });
-                fetchInstallationProducts();
-              },
-
-              child: HoverCard(
-                child: Container(
-                width: 500,
-                height: 425,
-                decoration: BoxDecoration(
-                color: Color(0xFFFFFFFF),
-                border: Border.all(color: Colors.black, width: 1),
-                borderRadius: BorderRadius.circular(25),
-                ),
-
+            Align(
+              alignment: Alignment.topCenter,
+              // Wrapped in SingleChildScrollView so the cards can scroll on mobile
+              child: SingleChildScrollView(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.center,
                   children: [
-                    SizedBox(height: 30),
-                    Icon(Icons.ac_unit, size: 50, color: Color(0xFF013B7A)),
-                    SizedBox(height: 12),
-                    Text("Installation", style: TextStyle(fontSize: 25, fontFamily: "Changa One", color: Color(0xFF013B7A))),
-                    SizedBox(height: 40),
-                    Text("Professional setup for your new cooling units to ensure", style: TextStyle(fontSize: 15, fontFamily: "Arimo")),
-                    SizedBox(height: 5),
-                    Text("maximum efficiency and long-term performance.", style: TextStyle(fontSize: 15, fontFamily: "Arimo")),
-                    SizedBox(height: 50),
-
                     Padding(
-                    padding: EdgeInsets.only(left: 95),
-                    child: Center(
-                    child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
-                          crossAxisAlignment: CrossAxisAlignment.center,
-                          children: [
-                            SizedBox(
-                              width: 24,
-                              child: Icon(Icons.check),
+                      padding: EdgeInsets.only(left: isDesktop ? 70 : 0, top: 50),
+                      child: isDesktop
+                          ? Align(
+                              alignment: Alignment.centerLeft,
+                              child: Text("AIR-CONDITIONING  SERVICES",
+                                  style: TextStyle(fontSize: 25, fontFamily: "Changa One")),
+                            )
+                          : Center(
+                              child: Text("AIR-CONDITIONING  SERVICES",
+                                  style: TextStyle(fontSize: 25, fontFamily: "Changa One"),
+                                  textAlign: TextAlign.center),
                             ),
-                            SizedBox(width: 8),
-                            Text("Handles both Small & Big AC types", style: TextStyle(fontSize: 15, fontFamily: "Arimo")),
-                          ],
-                        ),
-
-                      SizedBox(height: 10),
-
-                      Row(
-                          crossAxisAlignment: CrossAxisAlignment.center,
-                          children: [
-                            SizedBox(
-                              width: 24,
-                              child: Icon(Icons.check),
-                            ),
-
-                            SizedBox(width: 8),
-                            Text("Proper unit sizing and placement", style: TextStyle(fontSize: 15, fontFamily: "Arimo")),
-                          ],
-                        ),
-
-                      SizedBox(height: 10),
-
-                      Row(
-                          crossAxisAlignment: CrossAxisAlignment.center,
-                          children: [
-                            SizedBox(
-                              width: 24,
-                              child: Icon(Icons.check),
-                            ),
-
-                            SizedBox(width: 8),
-                            Text("Safe and certified installation", style: TextStyle(fontSize: 15, fontFamily: "Arimo")),
-                          ],
-                        ),
-
-                      SizedBox(height: 10),
-
-                      Row(
-                          crossAxisAlignment: CrossAxisAlignment.center,
-                          children: [
-                            SizedBox(
-                              width: 24,
-                              child: Icon(Icons.check),
-                            ),
-
-                            SizedBox(width: 8),
-                            Text("System testing and performance check", style: TextStyle(fontSize: 15, fontFamily: "Arimo")),
-                          ],
-                        ),
-                    ],
-                  ),
                     ),
-                    ),
-                  ],
-                    ),
-                  ),
-                ),
-              ),
+                    SizedBox(height: isDesktop ? 70 : 40),
 
-              SizedBox(width: 100),
-
-              //repair card
-              GestureDetector(
-              onTap: () {
-                setState(() {
-                  showRepairForm = true;
-                });
-                fetchRepairProducts();
-              },
-
-              child: HoverCard(
-                child: Container(
-                  width: 500,
-                  height: 425,
-                  decoration: BoxDecoration(
-                  color: Color(0xFFFFFFFF),
-                  border: Border.all(color: Colors.black, width: 1),
-                  borderRadius: BorderRadius.circular(25),
-                ),
-
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.center,
-                  children: [
-                    SizedBox(height: 30),
-                    Icon(Icons.home_repair_service, size: 50, color: Color(0xFF013B7A)),
-                    SizedBox(height: 12),
-                    Text("Repair", style: TextStyle(fontSize: 25, fontFamily: "Changa One", color: Color(0xFF013B7A))),
-                    SizedBox(height: 40),
-                    Text("Fast diagnostics and reliable servicing to restore", style: TextStyle(fontSize: 15, fontFamily: "Arimo")),
-                    SizedBox(height: 5),
-                    Text("cooling performance.", style: TextStyle(fontSize: 15, fontFamily: "Arimo")),
-                    SizedBox(height: 50),
-
-                    Padding(
-                    padding: EdgeInsets.only(left: 110),
-                    child: Center(
-                    child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
-                          crossAxisAlignment: CrossAxisAlignment.center,
-                          children: [
-                            SizedBox(
-                              width: 24,
-                              child: Icon(Icons.check),
-                            ),
-                            SizedBox(width: 8),
-                            Text("Comprehensive system diagnostics", style: TextStyle(fontSize: 15, fontFamily: "Arimo")),
-                          ],
-                        ),
-
-                      SizedBox(height: 10),
-
-                      Row(
-                          crossAxisAlignment: CrossAxisAlignment.center,
-                          children: [
-                            SizedBox(
-                              width: 24,
-                              child: Icon(Icons.check),
-                            ),
-
-                            SizedBox(width: 8),
-                            Text("Repair of faulty components", style: TextStyle(fontSize: 15, fontFamily: "Arimo")),
-                          ],
-                        ),
-                    ],
-                ),
-                  ),
-                ),
-                ],
-                    ),
-                  ),
-                ),
-              )
-              ],
-            ),
-          ),
-        ],
-      ),
-      ),
-
-      // installation form
-      if (showInstallationForm)
-      Positioned.fill(
-        child: Container(
-          color: Colors.black.withValues(alpha: 0.4),
-
-        child: Center(
-          child: Container(
-          width: 950,
-          constraints: BoxConstraints(
-            maxHeight: MediaQuery.of(context).size.height * 0.9,
-          ),
-          padding: EdgeInsets.all(30),
-
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(25),
-          ),
-
-          child: Stack(
-            children: [
-
-              // close button
-              Positioned(
-                right: 0,
-                top: 0,
-                child: IconButton(
-                  icon: Icon(Icons.close),
-                  onPressed: () {
-                    setState(() {
-                      showInstallationForm = false;
-                    });
-                    clearInstallationFields();
-                  },
-                ),
-              ),
-
-              Padding(
-                padding: EdgeInsets.only(top: 10),
-                child: Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-
-                    Expanded(
-                      flex: 3,
-                      child: SingleChildScrollView(
-                        controller: _installationScrollController,
-                        child: Form(
-                          key: _installationFormKey,
-                          child: Column(
-                            mainAxisSize: MainAxisSize.min,
+                    isDesktop
+                        ? Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
                             children: [
-                              Center(
-                                child: Text("Service Request", style: TextStyle(fontSize: 20, fontFamily: "Changa One"))
-                              ),
-                              SizedBox(height: 5),
-                              Center(
-                                child: Text("Installation", style: TextStyle(fontSize: 18, fontFamily: "Arimo", color: Color(0xFF013B7A), fontWeight: FontWeight.bold)),
-                              ),
-                              SizedBox(height: 20),
-
-                              Row(
-                                children: [
-                                  Expanded(
-                                    child: TextFormField(
-                                      controller: iNameController,
-                                      inputFormatters: [
-                                        FilteringTextInputFormatter.allow(RegExp(r'[a-zA-Z\s]')),
-                                      ],
-                                      decoration: InputDecoration(
-                                        labelText: "Name",
-                                        labelStyle: TextStyle(fontSize: 15, fontFamily: "Arimo"),
-                                        border: OutlineInputBorder(),
-                                      ),
-                                      validator: (value) {
-                                        if (value == null || value.trim().isEmpty) {
-                                          return "Name is required";
-                                        }
-                                        return null;
-                                      },
-                                    ),
-                                  ),
-                                  SizedBox(width: 10),
-                                  Expanded(
-                                    child: TextFormField(
-                                      controller: iMobileController,
-                                      keyboardType: TextInputType.number,
-                                      inputFormatters: [
-                                        FilteringTextInputFormatter.digitsOnly,
-                                        LengthLimitingTextInputFormatter(11),
-                                      ],
-                                      decoration: InputDecoration(
-                                        labelText: "Mobile Number",
-                                        labelStyle: TextStyle(fontSize: 15, fontFamily: "Arimo"),
-                                        border: OutlineInputBorder(),
-                                      ),
-                                      validator: (value) {
-                                        if (value == null || value.trim().isEmpty) {
-                                          return "Mobile number is required";
-                                        }
-                                        if(value.length != 11) {
-                                          return "Mobile Number must be 11 digits";
-                                        }
-                                        if(!RegExp(r'^09\d{9}$').hasMatch(value)){
-                                          return "Enter a valid mobile number";
-                                        }
-                                        return null;
-                                      },
-                                    ),
-                                  ),
-                                ],
-                              ),
-
-                              SizedBox(height: 10),
-
-                              TextFormField(
-                                controller: iEmailController,
-                                keyboardType: TextInputType.emailAddress,
-                                decoration: InputDecoration(
-                                  labelText: "Email Address",
-                                  labelStyle: TextStyle(fontSize: 15, fontFamily: "Arimo"),
-                                  border: OutlineInputBorder(),
-                                ),
-                                validator: (value) {
-                                  if (value == null || value.trim().isEmpty) {
-                                    return "Email is required";
-                                  }
-                                  if (!RegExp(r'^[\w\.-]+@gmail\.com$').hasMatch(value.trim())) {
-                                    return "Invalid Gmail format";
-                                  }
-                                  return null;
-                                },
-                              ),
-
-                              SizedBox(height: 10),
-
-                              Row(
-                                children: [
-                                  Expanded(
-                                    child: DropdownButtonFormField2<String>(
-                                      value: iSelectedType,
-                                      isExpanded: true,
-                                      decoration: InputDecoration(
-                                        labelStyle: TextStyle(fontSize: 15, fontFamily: "Arimo"),
-                                        border: OutlineInputBorder(),
-                                      ),
-                                      validator: (value) {
-                                        if (value == null) return "AC Type is required";
-                                        return null;
-                                      },
-                                      hint: Text("AC Type", style: TextStyle(fontSize: 15, fontFamily: "Arimo")),
-                                      items: ["Split Type", "Window Type", "Portable", "Central Air", "Ductless Mini-splits"]
-                                          .map((e) => DropdownMenuItem(value: e, child: Text(e)))
-                                          .toList(),
-                                      onChanged: (value) {
-                                      setState(() {
-                                        iSelectedType = value;
-                                        iSelectedProduct = null;
-                                        iSelectedPrice = 0.0;
-                                      });
-                                    },
-                                    ),
-                                  ),
-                                  SizedBox(width: 10),
-                                  Expanded(
-                                    child: DropdownButtonFormField2<String>(
-                                      value: iSelectedProduct,
-                                      isExpanded: true,
-                                      decoration: InputDecoration(
-                                        labelStyle: TextStyle(fontSize: 15, fontFamily: "Arimo"),
-                                        border: OutlineInputBorder(),
-                                      ),
-                                      validator: (value) {
-                                        if (value == null) return "Product Name is required";
-                                        return null;
-                                      },
-                                      hint: Text("Product Name", style: TextStyle(fontSize: 15, fontFamily: "Arimo")),
-                                      items: getFilteredProducts().map((p) {
-                                        return DropdownMenuItem<String>(
-                                          value: p['name'] as String,
-                                          child: Text(p['name'] as String, style: TextStyle(fontSize: 15, fontFamily: "Arimo")),
-                                        );
-                                      }).toList(),
-                                      onChanged: iSelectedType == null
-                                      ? null
-                                      : (value) {
-                                          setState(() {
-                                            iSelectedProduct = value;
-
-                                            final matched = iAllProducts.firstWhere(
-                                              (p) => p['name'] == value,
-                                            );
-
-                                            iSelectedPrice = (matched['price'] as num).toDouble();
-
-                                            installationFee = (matched['installationFee'] as num?)?.toDouble() ?? 0.0;
-                                          });
-                                        },
-                                    ),
-                                  ),
-                                ],
-                              ),
-
-                              SizedBox(height: 10),
-
-                              Row(
-                                children: [
-                                  Expanded(
-                                    child: TextFormField(
-                                      controller: iDateController,
-                                      readOnly: true,
-                                      decoration: InputDecoration(
-                                        labelText: "Preferred Date",
-                                        labelStyle: TextStyle(fontSize: 15, fontFamily: "Arimo"),
-                                        border: OutlineInputBorder(),
-                                        suffixIcon: Icon(Icons.calendar_today),
-                                      ),
-                                      validator: (value) {
-                                        if (value == null || value.isEmpty) return "Date is required";
-                                        return null;
-                                      },
-                                      onTap: () async {
-                                        DateTime? pickedDate = await showDatePicker(
-                                          context: context,
-                                          initialDate: DateTime.now(),
-                                          firstDate: DateTime.now(),
-                                          lastDate: DateTime(2100),
-                                        );
-                                        if (pickedDate != null) {
-                                          setState(() {
-                                            iDateController.text = "${pickedDate.month}/${pickedDate.day}/${pickedDate.year}";
-                                            iSelectedTime = null;
-                                          });
-                                          await fetchFullyBookedTimes(pickedDate, isInstallation: true);
-                                        }
-                                      },
-                                    ),
-                                  ),
-                                  SizedBox(width: 10),
-                                  Expanded(
-                                    child: DropdownButtonFormField2<String>(
-                                      value: iSelectedTime,
-                                      isExpanded: true,
-                                      decoration: InputDecoration(
-                                        labelStyle: TextStyle(fontSize: 15, fontFamily: "Arimo"),
-                                        border: OutlineInputBorder(),
-                                      ),
-                                      validator: (value) {
-                                        if (value == null) return "Time is required";
-                                        return null;
-                                      },
-                                      hint: Text("Preferred Time", style: TextStyle(fontSize: 15, fontFamily: "Arimo")),
-                                      items: getAvailableTimes(iDateController.text, iFullyBookedTimes)
-                                          .map((e) => DropdownMenuItem(value: e, child: Text(e)))
-                                          .toList(),
-                                      onChanged: (value) {
-                                        setState(() {
-                                          iSelectedTime = value;
-                                        });
-                                      },
-                                    ),
-                                  ),
-                                ],
-                              ),
-
-                              SizedBox(height: 10),
-
-                              TextFormField(
-                                controller: iAddressController,
-                                decoration: InputDecoration(
-                                  labelText: "Complete Address",
-                                  labelStyle: TextStyle(fontSize: 15, fontFamily: "Arimo"),
-                                  border: OutlineInputBorder(),
-                                ),
-                                validator: (value) {
-                                  if (value == null || value.trim().isEmpty) return "Address is required";
-                                  return null;
-                                },
-                              ),
-
-                              SizedBox(height: 10),
-
-                              DropdownButtonFormField2<String>(
-                                value: iPaymentMethod,
-                                isExpanded: true,
-                                decoration: InputDecoration(
-                                  labelStyle: TextStyle(fontSize: 15, fontFamily: "Arimo"),
-                                  border: OutlineInputBorder(),
-                                ),
-                                validator: (value) {
-                                  if (value == null) return "Payment method is required";
-                                  return null;
-                                },
-                                hint: Text("Payment Method", style: TextStyle(fontSize: 15, fontFamily: "Arimo")),
-                                items: ["Cash on Service", "GCash"]
-                                    .map((e) => DropdownMenuItem(value: e, child: Text(e)))
-                                    .toList(),
-                                onChanged: (value) {
-                                  setState(() {
-                                    iPaymentMethod = value;
-                                  });
-                                },
-                              ),
-
-                              SizedBox(height: 15),
-
-                              Center(
-                                child: Row(
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: [
-                                    Icon(Icons.mail, size: 20),
-                                    SizedBox(width: 10),
-                                    Text("All receipt and technician updates will be sent to your email.", style: TextStyle(fontSize: 13, fontFamily: "Arimo")),
-                                  ],
-                                ),
-                              ),
-
-                              SizedBox(height: 15),
-
-                              SizedBox(
-                                width: double.maxFinite,
-                                height: 45,
-                                child: ElevatedButton(
-                                  onPressed: submitInstallationRequest,
-                                  style: ElevatedButton.styleFrom(
-                                    backgroundColor: Color(0xFF013B7A),
-                                    elevation: 8,
-                                    shape: RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.zero,
-                                    ),
-                                  ),
-                                  child: isLoading
-                                      ? SizedBox(
-                                          height: 20,
-                                          width: 20,
-                                          child: CircularProgressIndicator(strokeWidth: 2),
-                                        )
-                                      : Text("SUBMIT", style: TextStyle(fontSize: 13, fontFamily: "Arimo", color: Colors.white, fontWeight: FontWeight.w700)),
-                                ),
-                              ),
+                              _buildInstallationCard(isDesktop, cardWidth),
+                              const SizedBox(width: 100),
+                              _buildRepairCard(isDesktop, cardWidth),
+                            ],
+                          )
+                        : Column(
+                            children: [
+                              _buildInstallationCard(isDesktop, cardWidth),
+                              const SizedBox(height: 40),
+                              _buildRepairCard(isDesktop, cardWidth),
+                              const SizedBox(height: 40),
                             ],
                           ),
-                        ),
-                      ),
-                    ),
+                  ],
+                ),
+              ),
+            ),
 
-                    SizedBox(width: 30),
+            // FORMS
+            if (showInstallationForm) _buildInstallationFormDialog(isDesktop, screenWidth),
+            if (showRepairForm) _buildRepairFormDialog(isDesktop, screenWidth),
+          ],
+        ),
+      ),
+    );
+  }
 
-                    Expanded(
-                    flex: 2,
-                    child: Padding(
-                      padding: EdgeInsets.only(top: 80),
-                      child: Container(
-                        padding: EdgeInsets.all(20),
-                        decoration: BoxDecoration(
-                          color: Color(0xFFF5F6FA),
-                          borderRadius: BorderRadius.circular(16),
-                          border: Border.all(color: Colors.grey.shade200),
-                        ),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Text("Service Summary", style: TextStyle(fontSize: 16, fontFamily: "Changa One", color: Color(0xFF013B7A))),
-                            SizedBox(height: 16),
-                            Divider(),
-                            SizedBox(height: 12),
-
-                            Text("Product", style: TextStyle(fontSize: 12, fontFamily: "Arimo", color: Colors.grey.shade600)),
-                            SizedBox(height: 4),
-                            Text(
-                              iSelectedProduct ?? "—",
-                              style: TextStyle(fontSize: 14, fontFamily: "Arimo", fontWeight: FontWeight.bold),
-                            ),
-
-                            SizedBox(height: 16),
-
-                            Text("AC Type", style: TextStyle(fontSize: 12, fontFamily: "Arimo", color: Colors.grey.shade600)),
-                            SizedBox(height: 4),
-                            Text(
-                              iSelectedType ?? "—",
-                              style: TextStyle(fontSize: 14, fontFamily: "Arimo", fontWeight: FontWeight.bold),
-                            ),
-
-                            SizedBox(height: 16),
-
-                            Text("Payment Method", style: TextStyle(fontSize: 12, fontFamily: "Arimo", color: Colors.grey.shade600)),
-                            SizedBox(height: 4),
-                            Text(
-                              iPaymentMethod ?? "—",
-                              style: TextStyle(fontSize: 14, fontFamily: "Arimo", fontWeight: FontWeight.bold),
-                            ),
-
-                            SizedBox(height: 16),
-
-                            Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                              children: [
-                                Text("AC Price", style: TextStyle(fontSize: 13, fontFamily: "Arimo", color: Colors.grey.shade600)),
-                                Text(
-                                  iSelectedProduct != null ? "₱${iSelectedPrice.toStringAsFixed(0)}" : "—",
-                                  style: TextStyle(fontSize: 13, fontFamily: "Arimo", fontWeight: FontWeight.bold),
-                                ),
-                              ],
-                            ),
-
-                            SizedBox(height: 10),
-
-                            Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                              children: [
-                                Text("Installation Fee", style: TextStyle(fontSize: 13, fontFamily: "Arimo", color: Colors.grey.shade600)),
-                                Text(
-                                  iSelectedProduct != null ? "₱${installationFee.toStringAsFixed(0)}" : "—",
-                                  style: TextStyle(fontSize: 13, fontFamily: "Arimo", fontWeight: FontWeight.bold),
-                                ),
-                              ],
-                            ),
-
-                            SizedBox(height: 20),
-                            Divider(),
-                            SizedBox(height: 12),
-
-                            Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                              children: [
-                                Text("Total Price", style: TextStyle(fontSize: 15, fontFamily: "Changa One")),
-                                Text(
-                                  iSelectedProduct != null
-                                      ? "₱${(iSelectedPrice + installationFee).toStringAsFixed(0)}"
-                                      : "—",
-                                  style: TextStyle(fontSize: 20, fontFamily: "Changa One", color: Color(0xFF013B7A)),
-                                ),
-                              ],
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-                    )
+  Widget _buildInstallationCard(bool isDesktop, double cardWidth) {
+    return GestureDetector(
+      onTap: () {
+        setState(() {
+          showInstallationForm = true;
+        });
+        fetchInstallationProducts();
+      },
+      child: HoverCard(
+        child: Container(
+          width: cardWidth,
+          height: isDesktop ? 425 : null,
+          padding: const EdgeInsets.symmetric(vertical: 30),
+          decoration: BoxDecoration(
+            color: const Color(0xFFFFFFFF),
+            border: Border.all(color: Colors.black, width: 1),
+            borderRadius: BorderRadius.circular(25),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              const Icon(Icons.ac_unit, size: 50, color: Color(0xFF013B7A)),
+              const SizedBox(height: 12),
+              const Text("Installation",
+                  style: TextStyle(fontSize: 25, fontFamily: "Changa One", color: Color(0xFF013B7A))),
+              const SizedBox(height: 40),
+              const Text("Professional setup for your new cooling units to ensure",
+                  style: TextStyle(fontSize: 15, fontFamily: "Arimo"), textAlign: TextAlign.center),
+              const SizedBox(height: 5),
+              const Text("maximum efficiency and long-term performance.",
+                  style: TextStyle(fontSize: 15, fontFamily: "Arimo"), textAlign: TextAlign.center),
+              const SizedBox(height: 50),
+              Padding(
+                padding: EdgeInsets.symmetric(horizontal: isDesktop ? 95 : 20),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    _buildCheckItem("Handles both Small & Big AC types"),
+                    const SizedBox(height: 10),
+                    _buildCheckItem("Proper unit sizing and placement"),
+                    const SizedBox(height: 10),
+                    _buildCheckItem("Safe and certified installation"),
+                    const SizedBox(height: 10),
+                    _buildCheckItem("System testing and performance check"),
                   ],
                 ),
               ),
             ],
           ),
-          )
-          )
-          ),
+        ),
       ),
+    );
+  }
 
-      if (showRepairForm)
-      Positioned.fill(
+  Widget _buildRepairCard(bool isDesktop, double cardWidth) {
+    return GestureDetector(
+      onTap: () {
+        setState(() {
+          showRepairForm = true;
+        });
+        fetchRepairProducts();
+      },
+      child: HoverCard(
         child: Container(
-          color: Colors.black.withValues(alpha: 0.4),
-          child: Center(
-            child: Container(
-              width: 950,
-              constraints: BoxConstraints(
-                maxHeight: MediaQuery.of(context).size.height * 0.9,
+          width: cardWidth,
+          height: isDesktop ? 425 : null,
+          padding: const EdgeInsets.symmetric(vertical: 30),
+          decoration: BoxDecoration(
+            color: const Color(0xFFFFFFFF),
+            border: Border.all(color: Colors.black, width: 1),
+            borderRadius: BorderRadius.circular(25),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              const Icon(Icons.home_repair_service, size: 50, color: Color(0xFF013B7A)),
+              const SizedBox(height: 12),
+              const Text("Repair",
+                  style: TextStyle(fontSize: 25, fontFamily: "Changa One", color: Color(0xFF013B7A))),
+              const SizedBox(height: 40),
+              const Text("Fast diagnostics and reliable servicing to restore",
+                  style: TextStyle(fontSize: 15, fontFamily: "Arimo"), textAlign: TextAlign.center),
+              const SizedBox(height: 5),
+              const Text("cooling performance.",
+                  style: TextStyle(fontSize: 15, fontFamily: "Arimo"), textAlign: TextAlign.center),
+              const SizedBox(height: 50),
+              Padding(
+                padding: EdgeInsets.symmetric(horizontal: isDesktop ? 110 : 20),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    _buildCheckItem("Comprehensive system diagnostics"),
+                    const SizedBox(height: 10),
+                    _buildCheckItem("Repair of faulty components"),
+                  ],
+                ),
               ),
-              padding: EdgeInsets.all(30),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(25),
-              ),
-              child: Stack(
-                children: [
+            ],
+          ),
+        ),
+      ),
+    );
+  }
 
-                  Positioned(
-                    right: 0,
-                    top: 0,
-                    child: IconButton(
-                      icon: Icon(Icons.close),
-                      onPressed: () {
-                        setState(() {
-                          showRepairForm = false;
-                        });
-                        clearRepairFields();
-                      },
-                    ),
-                  ),
+  Widget _buildCheckItem(String text) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const SizedBox(width: 24, child: Icon(Icons.check)),
+        const SizedBox(width: 8),
+        Expanded(child: Text(text, style: const TextStyle(fontSize: 15, fontFamily: "Arimo"))),
+      ],
+    );
+  }
 
-                  Padding(
-                    padding: EdgeInsets.only(top: 20),
-                    child: Row(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Expanded(
-                          flex: 3,
-                          child: SingleChildScrollView(
-                            controller: _repairScrollController,
-                            child: Form(
-                              key: _repairFormKey,
-                              child: Column(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  Center(
-                                    child: Text("Service Request", style: TextStyle(fontSize: 20, fontFamily: "Changa One")),
-                                  ),
-                                  SizedBox(height: 5),
-                                  Center(
-                                    child: Text("Repair", style: TextStyle(fontSize: 18, fontFamily: "Arimo", color: Color(0xFF013B7A), fontWeight: FontWeight.bold)),
-                                  ),
-                                  SizedBox(height: 10),
-                                  Center(
-                                    child: Row(
-                                      mainAxisSize: MainAxisSize.min,
-                                      children: [
-                                        Icon(Icons.lightbulb, size: 15, color: Colors.yellow),
-                                        SizedBox(width: 8),
-                                        Text("Tip: Try our AI Chatbox for instant troubleshooting before requesting service!", style: TextStyle(fontSize: 10, fontFamily: "Arimo")),
-                                      ],
-                                    ),
-                                  ),
-                                  SizedBox(height: 20),
+  Widget _buildInstallationFormDialog(bool isDesktop, double screenWidth) {
+    final formContent = Form(
+      key: _installationFormKey,
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          const Center(child: Text("Service Request", style: TextStyle(fontSize: 20, fontFamily: "Changa One"))),
+          const SizedBox(height: 5),
+          const Center(
+            child: Text("Installation",
+                style: TextStyle(fontSize: 18, fontFamily: "Arimo", color: Color(0xFF013B7A), fontWeight: FontWeight.bold)),
+          ),
+          const SizedBox(height: 20),
 
-                                  Row(
-                                    children: [
-                                      Expanded(
-                                        child: TextFormField(
-                                          controller: rNameController,
-                                          inputFormatters: [
-                                            FilteringTextInputFormatter.allow(RegExp(r'[a-zA-Z\s]')),
-                                          ],
-                                          decoration: InputDecoration(
-                                            labelText: "Name",
-                                            labelStyle: TextStyle(fontSize: 15, fontFamily: "Arimo"),
-                                            border: OutlineInputBorder(),
-                                          ),
-                                          validator: (value) {
-                                            if (value == null || value.trim().isEmpty) return "Name is required";
-                                            return null;
-                                          },
-                                        ),
-                                      ),
-                                      SizedBox(width: 10),
-                                      Expanded(
-                                        child: TextFormField(
-                                          controller: rMobileController,
-                                          keyboardType: TextInputType.number,
-                                          inputFormatters: [
-                                            FilteringTextInputFormatter.digitsOnly,
-                                            LengthLimitingTextInputFormatter(11),
-                                          ],
-                                          decoration: InputDecoration(
-                                            labelText: "Mobile Number",
-                                            labelStyle: TextStyle(fontSize: 15, fontFamily: "Arimo"),
-                                            border: OutlineInputBorder(),
-                                          ),
-                                          validator: (value) {
-                                            if (value == null || value.trim().isEmpty) return "Mobile number is required";
-                                            if(value.length != 11) {
-                                              return "Mobile Number must be 11 digits";
-                                            }
-                                            if(!RegExp(r'^09\d{9}$').hasMatch(value)){
-                                              return "Enter a valid mobile number";
-                                            }
-                                            return null;
-                                          },
-                                        ),
-                                      ),
-                                    ],
-                                  ),
+          // Name & Mobile
+          _buildResponsiveRow(
+            isDesktop,
+            TextFormField(
+              controller: iNameController,
+              inputFormatters: [FilteringTextInputFormatter.allow(RegExp(r'[a-zA-Z\s]'))],
+              decoration: const InputDecoration(labelText: "Name", labelStyle: TextStyle(fontSize: 15, fontFamily: "Arimo"), border: OutlineInputBorder()),
+              validator: (value) => (value == null || value.trim().isEmpty) ? "Name is required" : null,
+            ),
+            TextFormField(
+              controller: iMobileController,
+              keyboardType: TextInputType.number,
+              inputFormatters: [FilteringTextInputFormatter.digitsOnly, LengthLimitingTextInputFormatter(11)],
+              decoration: const InputDecoration(labelText: "Mobile Number", labelStyle: TextStyle(fontSize: 15, fontFamily: "Arimo"), border: OutlineInputBorder()),
+              validator: (value) {
+                if (value == null || value.trim().isEmpty) return "Mobile number is required";
+                if (value.length != 11) return "Mobile Number must be 11 digits";
+                if (!RegExp(r'^09\d{9}$').hasMatch(value)) return "Enter a valid mobile number";
+                return null;
+              },
+            ),
+          ),
+          const SizedBox(height: 10),
 
-                                  SizedBox(height: 10),
+          // Email
+          TextFormField(
+            controller: iEmailController,
+            keyboardType: TextInputType.emailAddress,
+            decoration: const InputDecoration(labelText: "Email Address", labelStyle: TextStyle(fontSize: 15, fontFamily: "Arimo"), border: OutlineInputBorder()),
+            validator: (value) {
+              if (value == null || value.trim().isEmpty) return "Email is required";
+              if (!RegExp(r'^[\w\.-]+@gmail\.com$').hasMatch(value.trim())) return "Invalid Gmail format";
+              return null;
+            },
+          ),
+          const SizedBox(height: 10),
 
-                                  TextFormField(
-                                    controller: rEmailController,
-                                    keyboardType: TextInputType.emailAddress,
-                                    decoration: InputDecoration(
-                                      labelText: "Email Address",
-                                      labelStyle: TextStyle(fontSize: 15, fontFamily: "Arimo"),
-                                      border: OutlineInputBorder(),
-                                    ),
-                                    validator: (value) {
-                                      if (value == null || value.trim().isEmpty) return "Email is required";
-                                      if (!RegExp(r'^[\w\.-]+@gmail\.com$').hasMatch(value.trim())) return "Invalid Gmail format";
-                                      return null;
-                                    },
-                                  ),
+          // AC Type & Product
+          _buildResponsiveRow(
+            isDesktop,
+            DropdownButtonFormField2<String>(
+              value: iSelectedType,
+              isExpanded: true,
+              decoration: const InputDecoration(labelStyle: TextStyle(fontSize: 15, fontFamily: "Arimo"), border: OutlineInputBorder()),
+              validator: (value) => value == null ? "AC Type is required" : null,
+              hint: const Text("AC Type", style: TextStyle(fontSize: 15, fontFamily: "Arimo")),
+              items: ["Split Type", "Window Type", "Portable", "Central Air", "Ductless Mini-splits"]
+                  .map((e) => DropdownMenuItem(value: e, child: Text(e))).toList(),
+              onChanged: (value) {
+                setState(() {
+                  iSelectedType = value;
+                  iSelectedProduct = null;
+                  iSelectedPrice = 0.0;
+                });
+              },
+            ),
+            DropdownButtonFormField2<String>(
+              value: iSelectedProduct,
+              isExpanded: true,
+              decoration: const InputDecoration(labelStyle: TextStyle(fontSize: 15, fontFamily: "Arimo"), border: OutlineInputBorder()),
+              validator: (value) => value == null ? "Product Name is required" : null,
+              hint: const Text("Product Name", style: TextStyle(fontSize: 15, fontFamily: "Arimo")),
+              items: getFilteredProducts().map((p) => DropdownMenuItem<String>(value: p['name'] as String, child: Text(p['name'] as String, style: const TextStyle(fontSize: 15, fontFamily: "Arimo")))).toList(),
+              onChanged: iSelectedType == null ? null : (value) {
+                setState(() {
+                  iSelectedProduct = value;
+                  final matched = iAllProducts.firstWhere((p) => p['name'] == value);
+                  iSelectedPrice = (matched['price'] as num).toDouble();
+                  installationFee = (matched['installationFee'] as num?)?.toDouble() ?? 0.0;
+                });
+              },
+            ),
+          ),
+          const SizedBox(height: 10),
 
-                                  SizedBox(height: 10),
+          // Date & Time
+          _buildResponsiveRow(
+            isDesktop,
+            TextFormField(
+              controller: iDateController,
+              readOnly: true,
+              decoration: const InputDecoration(labelText: "Preferred Date", labelStyle: TextStyle(fontSize: 15, fontFamily: "Arimo"), border: OutlineInputBorder(), suffixIcon: Icon(Icons.calendar_today)),
+              validator: (value) => (value == null || value.isEmpty) ? "Date is required" : null,
+              onTap: () async {
+                DateTime? pickedDate = await showDatePicker(context: context, initialDate: DateTime.now(), firstDate: DateTime.now(), lastDate: DateTime(2100));
+                if (pickedDate != null) {
+                  setState(() {
+                    iDateController.text = "${pickedDate.month}/${pickedDate.day}/${pickedDate.year}";
+                    iSelectedTime = null;
+                  });
+                  await fetchFullyBookedTimes(pickedDate, isInstallation: true);
+                }
+              },
+            ),
+            DropdownButtonFormField2<String>(
+              value: iSelectedTime,
+              isExpanded: true,
+              decoration: const InputDecoration(labelStyle: TextStyle(fontSize: 15, fontFamily: "Arimo"), border: OutlineInputBorder()),
+              validator: (value) => value == null ? "Time is required" : null,
+              hint: const Text("Preferred Time", style: TextStyle(fontSize: 15, fontFamily: "Arimo")),
+              items: getAvailableTimes(iDateController.text, iFullyBookedTimes)
+                  .map((e) => DropdownMenuItem(value: e, child: Text(e))).toList(),
+              onChanged: (value) => setState(() => iSelectedTime = value),
+            ),
+          ),
+          const SizedBox(height: 10),
 
-                                  Row(
-                                    children: [
-                                      Expanded(
-                                        child: DropdownButtonFormField2<String>(
-                                          value: rSelectedType,
-                                          isExpanded: true,
-                                          decoration: InputDecoration(
-                                            labelStyle: TextStyle(fontSize: 15, fontFamily: "Arimo"),
-                                            border: OutlineInputBorder(),
-                                          ),
-                                          validator: (value) {
-                                            if (value == null) return "AC Type is required";
-                                            return null;
-                                          },
-                                          hint: Text("AC Type", style: TextStyle(fontSize: 15, fontFamily: "Arimo")),
-                                          items: ["Split Type", "Window Type", "Portable", "Central Air", "Ductless Mini-splits"]
-                                              .map((e) => DropdownMenuItem(value: e, child: Text(e)))
-                                              .toList(),
-                                          onChanged: (value) {
-                                            setState(() {
-                                              rSelectedType = value;
-                                              rSelectedProduct = null;
-                                            });
-                                          },
-                                        ),
-                                      ),
-                                      SizedBox(width: 10),
-                                      Expanded(
-                                        child: DropdownButtonFormField2<String>(
-                                          value: rSelectedProduct,
-                                          isExpanded: true,
-                                          decoration: InputDecoration(
-                                            labelStyle: TextStyle(fontSize: 15, fontFamily: "Arimo"),
-                                            border: OutlineInputBorder(),
-                                          ),
-                                          validator: (value) {
-                                            if (value == null) return "Product Name is required";
-                                            return null;
-                                          },
-                                          hint: Text("Product Name", style: TextStyle(fontSize: 15, fontFamily: "Arimo")),
-                                          items: getFilteredRepairProducts().map((p) {
-                                            return DropdownMenuItem<String>(
-                                              value: p['name'] as String,
-                                              child: Text(p['name'] as String, style: TextStyle(fontSize: 15, fontFamily: "Arimo")),
-                                            );
-                                          }).toList(),
-                                          onChanged: rSelectedType == null
-                                          ? null
-                                          : (value) {
-                                              setState(() {
-                                                rSelectedProduct = value;
+          // Address
+          TextFormField(
+            controller: iAddressController,
+            decoration: const InputDecoration(labelText: "Complete Address", labelStyle: TextStyle(fontSize: 15, fontFamily: "Arimo"), border: OutlineInputBorder()),
+            validator: (value) => (value == null || value.trim().isEmpty) ? "Address is required" : null,
+          ),
+          const SizedBox(height: 10),
 
-                                                final matched = rAllProducts.firstWhere(
-                                                  (p) => p['name'] == value,
-                                                );
+          // Payment Method
+          DropdownButtonFormField2<String>(
+            value: iPaymentMethod,
+            isExpanded: true,
+            decoration: const InputDecoration(labelStyle: TextStyle(fontSize: 15, fontFamily: "Arimo"), border: OutlineInputBorder()),
+            validator: (value) => value == null ? "Payment method is required" : null,
+            hint: const Text("Payment Method", style: TextStyle(fontSize: 15, fontFamily: "Arimo")),
+            items: ["Cash on Service", "GCash"].map((e) => DropdownMenuItem(value: e, child: Text(e))).toList(),
+            onChanged: (value) => setState(() => iPaymentMethod = value),
+          ),
+          const SizedBox(height: 15),
 
-                                                repairFee = (matched['repairFee'] as num?)?.toDouble() ?? 0.0;
-                                              });
-                                            },
-                                        ),
-                                      ),
-                                    ],
-                                  ),
+          Wrap(
+            alignment: WrapAlignment.center,
+            children: const [
+              Icon(Icons.mail, size: 20),
+              SizedBox(width: 10),
+              Text("All receipt and technician updates will be sent to your email.", style: TextStyle(fontSize: 13, fontFamily: "Arimo")),
+            ],
+          ),
+          const SizedBox(height: 15),
 
-                                  SizedBox(height: 10),
+          SizedBox(
+            width: double.maxFinite,
+            height: 45,
+            child: ElevatedButton(
+              onPressed: submitInstallationRequest,
+              style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF013B7A), elevation: 8, shape: const RoundedRectangleBorder(borderRadius: BorderRadius.zero)),
+              child: isLoading
+                  ? const SizedBox(height: 20, width: 20, child: CircularProgressIndicator(strokeWidth: 2))
+                  : const Text("SUBMIT", style: TextStyle(fontSize: 13, fontFamily: "Arimo", color: Colors.white, fontWeight: FontWeight.w700)),
+            ),
+          ),
+        ],
+      ),
+    );
 
-                                  Row(
-                                    children: [
-                                      Expanded(
-                                        child: TextFormField(
-                                          controller: rDateController,
-                                          readOnly: true,
-                                          decoration: InputDecoration(
-                                            labelText: "Preferred Date",
-                                            labelStyle: TextStyle(fontSize: 15, fontFamily: "Arimo"),
-                                            border: OutlineInputBorder(),
-                                            suffixIcon: Icon(Icons.calendar_today),
-                                          ),
-                                          validator: (value) {
-                                            if (value == null || value.isEmpty) return "Date is required";
-                                            return null;
-                                          },
-                                          onTap: () async {
-                                            DateTime? pickedDate = await showDatePicker(
-                                              context: context,
-                                              initialDate: DateTime.now(),
-                                              firstDate: DateTime.now(),
-                                              lastDate: DateTime(2100),
-                                            );
-                                            if (pickedDate != null) {
-                                              setState(() {
-                                                rDateController.text = "${pickedDate.month}/${pickedDate.day}/${pickedDate.year}";
-                                                rSelectedTime = null;
-                                              });
-                                              await fetchFullyBookedTimes(pickedDate, isInstallation: false);
-                                            }
-                                          },
-                                        ),
-                                      ),
-                                      SizedBox(width: 10),
-                                      Expanded(
-                                        child: DropdownButtonFormField2<String>(
-                                          value: rSelectedTime,
-                                          isExpanded: true,
-                                          decoration: InputDecoration(
-                                            labelStyle: TextStyle(fontSize: 15, fontFamily: "Arimo"),
-                                            border: OutlineInputBorder(),
-                                          ),
-                                          validator: (value) {
-                                            if (value == null) return "Time is required";
-                                            return null;
-                                          },
-                                          hint: Text("Preferred Time", style: TextStyle(fontSize: 15, fontFamily: "Arimo")),
-                                          items: getAvailableTimes(rDateController.text, rFullyBookedTimes)
-                                              .map((e) => DropdownMenuItem(value: e, child: Text(e)))
-                                              .toList(),
-                                          onChanged: (value) {
-                                            setState(() {
-                                              rSelectedTime = value;
-                                            });
-                                          },
-                                        ),
-                                      ),
-                                    ],
-                                  ),
+    final summaryContent = Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(color: const Color(0xFFF5F6FA), borderRadius: BorderRadius.circular(16), border: Border.all(color: Colors.grey.shade200)),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          const Text("Service Summary", style: TextStyle(fontSize: 16, fontFamily: "Changa One", color: Color(0xFF013B7A))),
+          const SizedBox(height: 16),
+          const Divider(),
+          const SizedBox(height: 12),
+          Text("Product", style: TextStyle(fontSize: 12, fontFamily: "Arimo", color: Colors.grey.shade600)),
+          const SizedBox(height: 4),
+          Text(iSelectedProduct ?? "—", style: const TextStyle(fontSize: 14, fontFamily: "Arimo", fontWeight: FontWeight.bold)),
+          const SizedBox(height: 16),
+          Text("AC Type", style: TextStyle(fontSize: 12, fontFamily: "Arimo", color: Colors.grey.shade600)),
+          const SizedBox(height: 4),
+          Text(iSelectedType ?? "—", style: const TextStyle(fontSize: 14, fontFamily: "Arimo", fontWeight: FontWeight.bold)),
+          const SizedBox(height: 16),
+          Text("Payment Method", style: TextStyle(fontSize: 12, fontFamily: "Arimo", color: Colors.grey.shade600)),
+          const SizedBox(height: 4),
+          Text(iPaymentMethod ?? "—", style: const TextStyle(fontSize: 14, fontFamily: "Arimo", fontWeight: FontWeight.bold)),
+          const SizedBox(height: 16),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text("AC Price", style: TextStyle(fontSize: 13, fontFamily: "Arimo", color: Colors.grey.shade600)),
+              Text(iSelectedProduct != null ? "₱${iSelectedPrice.toStringAsFixed(0)}" : "—", style: const TextStyle(fontSize: 13, fontFamily: "Arimo", fontWeight: FontWeight.bold)),
+            ],
+          ),
+          const SizedBox(height: 10),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text("Installation Fee", style: TextStyle(fontSize: 13, fontFamily: "Arimo", color: Colors.grey.shade600)),
+              Text(iSelectedProduct != null ? "₱${installationFee.toStringAsFixed(0)}" : "—", style: const TextStyle(fontSize: 13, fontFamily: "Arimo", fontWeight: FontWeight.bold)),
+            ],
+          ),
+          const SizedBox(height: 20),
+          const Divider(),
+          const SizedBox(height: 12),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              const Text("Total Price", style: TextStyle(fontSize: 15, fontFamily: "Changa One")),
+              Text(iSelectedProduct != null ? "₱${(iSelectedPrice + installationFee).toStringAsFixed(0)}" : "—",
+                  style: const TextStyle(fontSize: 20, fontFamily: "Changa One", color: Color(0xFF013B7A))),
+            ],
+          ),
+        ],
+      ),
+    );
 
-                                  SizedBox(height: 10),
+    return _buildDialogOverlay(isDesktop, screenWidth, formContent, summaryContent, () {
+      setState(() => showInstallationForm = false);
+      clearInstallationFields();
+    }, _installationScrollController);
+  }
 
-                                  TextFormField(
-                                    controller: rAddressController,
-                                    decoration: InputDecoration(
-                                      labelText: "Complete Address",
-                                      labelStyle: TextStyle(fontSize: 15, fontFamily: "Arimo"),
-                                      border: OutlineInputBorder(),
-                                    ),
-                                    validator: (value) {
-                                      if (value == null || value.trim().isEmpty) return "Address is required";
-                                      return null;
-                                    },
-                                  ),
+  Widget _buildRepairFormDialog(bool isDesktop, double screenWidth) {
+    final formContent = Form(
+      key: _repairFormKey,
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          const Center(child: Text("Service Request", style: TextStyle(fontSize: 20, fontFamily: "Changa One"))),
+          const SizedBox(height: 5),
+          const Center(child: Text("Repair", style: TextStyle(fontSize: 18, fontFamily: "Arimo", color: Color(0xFF013B7A), fontWeight: FontWeight.bold))),
+          const SizedBox(height: 10),
+          Wrap(
+            alignment: WrapAlignment.center,
+            children: const [
+              Icon(Icons.lightbulb, size: 15, color: Colors.yellow),
+              SizedBox(width: 8),
+              Text("Tip: Try our AI Chatbox for instant troubleshooting before requesting service!", style: TextStyle(fontSize: 10, fontFamily: "Arimo")),
+            ],
+          ),
+          const SizedBox(height: 20),
 
-                                  SizedBox(height: 10),
+          _buildResponsiveRow(
+            isDesktop,
+            TextFormField(
+              controller: rNameController,
+              inputFormatters: [FilteringTextInputFormatter.allow(RegExp(r'[a-zA-Z\s]'))],
+              decoration: const InputDecoration(labelText: "Name", labelStyle: TextStyle(fontSize: 15, fontFamily: "Arimo"), border: OutlineInputBorder()),
+              validator: (value) => (value == null || value.trim().isEmpty) ? "Name is required" : null,
+            ),
+            TextFormField(
+              controller: rMobileController,
+              keyboardType: TextInputType.number,
+              inputFormatters: [FilteringTextInputFormatter.digitsOnly, LengthLimitingTextInputFormatter(11)],
+              decoration: const InputDecoration(labelText: "Mobile Number", labelStyle: TextStyle(fontSize: 15, fontFamily: "Arimo"), border: OutlineInputBorder()),
+              validator: (value) {
+                if (value == null || value.trim().isEmpty) return "Mobile number is required";
+                if (value.length != 11) return "Mobile Number must be 11 digits";
+                if (!RegExp(r'^09\d{9}$').hasMatch(value)) return "Enter a valid mobile number";
+                return null;
+              },
+            ),
+          ),
+          const SizedBox(height: 10),
 
-                                  TextFormField(
-                                    controller: rDescriptionController,
-                                    decoration: InputDecoration(
-                                      labelText: "Description",
-                                      labelStyle: TextStyle(fontSize: 15, fontFamily: "Arimo"),
-                                      border: OutlineInputBorder(),
-                                    ),
-                                    validator: (value) {
-                                      if (value == null || value.trim().isEmpty) return "Description is required";
-                                      return null;
-                                    },
-                                  ),
+          TextFormField(
+            controller: rEmailController,
+            keyboardType: TextInputType.emailAddress,
+            decoration: const InputDecoration(labelText: "Email Address", labelStyle: TextStyle(fontSize: 15, fontFamily: "Arimo"), border: OutlineInputBorder()),
+            validator: (value) {
+              if (value == null || value.trim().isEmpty) return "Email is required";
+              if (!RegExp(r'^[\w\.-]+@gmail\.com$').hasMatch(value.trim())) return "Invalid Gmail format";
+              return null;
+            },
+          ),
+          const SizedBox(height: 10),
 
-                                  SizedBox(height: 10),
+          _buildResponsiveRow(
+            isDesktop,
+            DropdownButtonFormField2<String>(
+              value: rSelectedType,
+              isExpanded: true,
+              decoration: const InputDecoration(labelStyle: TextStyle(fontSize: 15, fontFamily: "Arimo"), border: OutlineInputBorder()),
+              validator: (value) => value == null ? "AC Type is required" : null,
+              hint: const Text("AC Type", style: TextStyle(fontSize: 15, fontFamily: "Arimo")),
+              items: ["Split Type", "Window Type", "Portable", "Central Air", "Ductless Mini-splits"]
+                  .map((e) => DropdownMenuItem(value: e, child: Text(e))).toList(),
+              onChanged: (value) => setState(() { rSelectedType = value; rSelectedProduct = null; }),
+            ),
+            DropdownButtonFormField2<String>(
+              value: rSelectedProduct,
+              isExpanded: true,
+              decoration: const InputDecoration(labelStyle: TextStyle(fontSize: 15, fontFamily: "Arimo"), border: OutlineInputBorder()),
+              validator: (value) => value == null ? "Product Name is required" : null,
+              hint: const Text("Product Name", style: TextStyle(fontSize: 15, fontFamily: "Arimo")),
+              items: getFilteredRepairProducts().map((p) => DropdownMenuItem<String>(value: p['name'] as String, child: Text(p['name'] as String, style: const TextStyle(fontSize: 15, fontFamily: "Arimo")))).toList(),
+              onChanged: rSelectedType == null ? null : (value) {
+                setState(() {
+                  rSelectedProduct = value;
+                  final matched = rAllProducts.firstWhere((p) => p['name'] == value);
+                  repairFee = (matched['repairFee'] as num?)?.toDouble() ?? 0.0;
+                });
+              },
+            ),
+          ),
+          const SizedBox(height: 10),
 
-                                  DropdownButtonFormField2<String>(
-                                    value: rPaymentMethod,
-                                    isExpanded: true,
-                                    decoration: InputDecoration(
-                                      labelStyle: TextStyle(fontSize: 15, fontFamily: "Arimo"),
-                                      border: OutlineInputBorder(),
-                                    ),
-                                    validator: (value) {
-                                      if (value == null) return "Payment method is required";
-                                      return null;
-                                    },
-                                    hint: Text("Payment Method", style: TextStyle(fontSize: 15, fontFamily: "Arimo")),
-                                    items: ["Cash on Service", "GCash"]
-                                        .map((e) => DropdownMenuItem(value: e, child: Text(e)))
-                                        .toList(),
-                                    onChanged: (value) {
-                                      setState(() {
-                                        rPaymentMethod = value;
-                                      });
-                                    },
-                                  ),
+          _buildResponsiveRow(
+            isDesktop,
+            TextFormField(
+              controller: rDateController,
+              readOnly: true,
+              decoration: const InputDecoration(labelText: "Preferred Date", labelStyle: TextStyle(fontSize: 15, fontFamily: "Arimo"), border: OutlineInputBorder(), suffixIcon: Icon(Icons.calendar_today)),
+              validator: (value) => (value == null || value.isEmpty) ? "Date is required" : null,
+              onTap: () async {
+                DateTime? pickedDate = await showDatePicker(context: context, initialDate: DateTime.now(), firstDate: DateTime.now(), lastDate: DateTime(2100));
+                if (pickedDate != null) {
+                  setState(() {
+                    rDateController.text = "${pickedDate.month}/${pickedDate.day}/${pickedDate.year}";
+                    rSelectedTime = null;
+                  });
+                  await fetchFullyBookedTimes(pickedDate, isInstallation: false);
+                }
+              },
+            ),
+            DropdownButtonFormField2<String>(
+              value: rSelectedTime,
+              isExpanded: true,
+              decoration: const InputDecoration(labelStyle: TextStyle(fontSize: 15, fontFamily: "Arimo"), border: OutlineInputBorder()),
+              validator: (value) => value == null ? "Time is required" : null,
+              hint: const Text("Preferred Time", style: TextStyle(fontSize: 15, fontFamily: "Arimo")),
+              items: getAvailableTimes(rDateController.text, rFullyBookedTimes)
+                  .map((e) => DropdownMenuItem(value: e, child: Text(e))).toList(),
+              onChanged: (value) => setState(() => rSelectedTime = value),
+            ),
+          ),
+          const SizedBox(height: 10),
 
-                                  SizedBox(height: 15),
+          TextFormField(
+            controller: rAddressController,
+            decoration: const InputDecoration(labelText: "Complete Address", labelStyle: TextStyle(fontSize: 15, fontFamily: "Arimo"), border: OutlineInputBorder()),
+            validator: (value) => (value == null || value.trim().isEmpty) ? "Address is required" : null,
+          ),
+          const SizedBox(height: 10),
 
-                                  Center(
-                                    child: Row(
-                                      mainAxisSize: MainAxisSize.min,
-                                      children: [
-                                        Icon(Icons.mail, size: 20),
-                                        SizedBox(width: 10),
-                                        Text("All receipt and technician updates will be sent to your email.", style: TextStyle(fontSize: 13, fontFamily: "Arimo")),
-                                      ],
-                                    ),
-                                  ),
+          TextFormField(
+            controller: rDescriptionController,
+            decoration: const InputDecoration(labelText: "Description", labelStyle: TextStyle(fontSize: 15, fontFamily: "Arimo"), border: OutlineInputBorder()),
+            validator: (value) => (value == null || value.trim().isEmpty) ? "Description is required" : null,
+          ),
+          const SizedBox(height: 10),
 
-                                  SizedBox(height: 15),
+          DropdownButtonFormField2<String>(
+            value: rPaymentMethod,
+            isExpanded: true,
+            decoration: const InputDecoration(labelStyle: TextStyle(fontSize: 15, fontFamily: "Arimo"), border: OutlineInputBorder()),
+            validator: (value) => value == null ? "Payment method is required" : null,
+            hint: const Text("Payment Method", style: TextStyle(fontSize: 15, fontFamily: "Arimo")),
+            items: ["Cash on Service", "GCash"].map((e) => DropdownMenuItem(value: e, child: Text(e))).toList(),
+            onChanged: (value) => setState(() => rPaymentMethod = value),
+          ),
+          const SizedBox(height: 15),
 
-                                  SizedBox(
-                                    width: double.maxFinite,
-                                    height: 45,
-                                    child: ElevatedButton(
-                                      onPressed: submitRepairRequest,
-                                      style: ElevatedButton.styleFrom(
-                                        backgroundColor: Color(0xFF013B7A),
-                                        elevation: 8,
-                                        shape: RoundedRectangleBorder(
-                                          borderRadius: BorderRadius.zero,
-                                        ),
-                                      ),
-                                      child: isLoading
-                                          ? SizedBox(height: 20, width: 20, child: CircularProgressIndicator(strokeWidth: 2))
-                                          : Text("SUBMIT", style: TextStyle(fontSize: 13, fontFamily: "Arimo", color: Colors.white, fontWeight: FontWeight.w700)),
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
+          Wrap(
+            alignment: WrapAlignment.center,
+            children: const [
+              Icon(Icons.mail, size: 20),
+              SizedBox(width: 10),
+              Text("All receipt and technician updates will be sent to your email.", style: TextStyle(fontSize: 13, fontFamily: "Arimo")),
+            ],
+          ),
+          const SizedBox(height: 15),
+
+          SizedBox(
+            width: double.maxFinite,
+            height: 45,
+            child: ElevatedButton(
+              onPressed: submitRepairRequest,
+              style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF013B7A), elevation: 8, shape: const RoundedRectangleBorder(borderRadius: BorderRadius.zero)),
+              child: isLoading
+                  ? const SizedBox(height: 20, width: 20, child: CircularProgressIndicator(strokeWidth: 2))
+                  : const Text("SUBMIT", style: TextStyle(fontSize: 13, fontFamily: "Arimo", color: Colors.white, fontWeight: FontWeight.w700)),
+            ),
+          ),
+        ],
+      ),
+    );
+
+    final summaryContent = Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(color: const Color(0xFFF5F6FA), borderRadius: BorderRadius.circular(16), border: Border.all(color: Colors.grey.shade200)),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          const Text("Service Summary", style: TextStyle(fontSize: 16, fontFamily: "Changa One", color: Color(0xFF013B7A))),
+          const SizedBox(height: 16),
+          const Divider(),
+          const SizedBox(height: 12),
+          Text("Product", style: TextStyle(fontSize: 12, fontFamily: "Arimo", color: Colors.grey.shade600)),
+          const SizedBox(height: 4),
+          Text(rSelectedProduct ?? "—", style: const TextStyle(fontSize: 14, fontFamily: "Arimo", fontWeight: FontWeight.bold)),
+          const SizedBox(height: 16),
+          Text("AC Type", style: TextStyle(fontSize: 12, fontFamily: "Arimo", color: Colors.grey.shade600)),
+          const SizedBox(height: 4),
+          Text(rSelectedType ?? "—", style: const TextStyle(fontSize: 14, fontFamily: "Arimo", fontWeight: FontWeight.bold)),
+          const SizedBox(height: 16),
+          Text("Payment Method", style: TextStyle(fontSize: 12, fontFamily: "Arimo", color: Colors.grey.shade600)),
+          const SizedBox(height: 4),
+          Text(rPaymentMethod ?? "—", style: const TextStyle(fontSize: 14, fontFamily: "Arimo", fontWeight: FontWeight.bold)),
+          const SizedBox(height: 36),
+          const Divider(),
+          const SizedBox(height: 12),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              const Text("Repair Fee", style: TextStyle(fontSize: 15, fontFamily: "Changa One")),
+              Text(rSelectedProduct != null ? "₱${repairFee.toStringAsFixed(0)}" : "—",
+                  style: const TextStyle(fontSize: 20, fontFamily: "Changa One", color: Color(0xFF013B7A))),
+            ],
+          ),
+        ],
+      ),
+    );
+
+    return _buildDialogOverlay(isDesktop, screenWidth, formContent, summaryContent, () {
+      setState(() => showRepairForm = false);
+      clearRepairFields();
+    }, _repairScrollController);
+  }
+
+  Widget _buildDialogOverlay(bool isDesktop, double screenWidth, Widget formContent, Widget summaryContent, VoidCallback onClose, ScrollController scrollController) {
+    return Positioned.fill(
+      child: Container(
+        color: Colors.black.withValues(alpha: 0.4),
+        child: Center(
+          child: Container(
+            width: isDesktop ? 950 : screenWidth * 0.95,
+            constraints: BoxConstraints(maxHeight: MediaQuery.of(context).size.height * 0.9),
+            padding: EdgeInsets.all(isDesktop ? 30 : 20),
+            decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(25)),
+            child: Stack(
+              children: [
+                Positioned(
+                  right: 0,
+                  top: 0,
+                  child: IconButton(icon: const Icon(Icons.close), onPressed: onClose),
+                ),
+                Positioned(
+                  top: 40,
+                  left: 0,
+                  right: 0,
+                  bottom: 0,
+                  child: isDesktop
+                      ? Row(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Expanded(flex: 3, child: SingleChildScrollView(controller: scrollController, child: formContent)),
+                            const SizedBox(width: 30),
+                            Expanded(flex: 2, child: Padding(padding: const EdgeInsets.only(top: 80), child: summaryContent)),
+                          ],
+                        )
+                      : SingleChildScrollView(
+                          controller: scrollController,
+                          child: Column(
+                            children: [
+                              formContent,
+                              const SizedBox(height: 30),
+                              summaryContent,
+                            ],
                           ),
                         ),
-
-                        SizedBox(width: 30),
-
-                        Expanded(
-                          flex: 2,
-                          child: Padding(
-                            padding: EdgeInsets.only(top: 115),
-                            child: Container(
-                              padding: EdgeInsets.all(20),
-                              decoration: BoxDecoration(
-                                color: Color(0xFFF5F6FA),
-                                borderRadius: BorderRadius.circular(16),
-                                border: Border.all(color: Colors.grey.shade200),
-                              ),
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  Text("Service Summary", style: TextStyle(fontSize: 16, fontFamily: "Changa One", color: Color(0xFF013B7A))),
-                                  SizedBox(height: 16),
-                                  Divider(),
-                                  SizedBox(height: 12),
-
-                                  Text("Product", style: TextStyle(fontSize: 12, fontFamily: "Arimo", color: Colors.grey.shade600)),
-                                  SizedBox(height: 4),
-                                  Text(
-                                    rSelectedProduct ?? "—",
-                                    style: TextStyle(fontSize: 14, fontFamily: "Arimo", fontWeight: FontWeight.bold),
-                                  ),
-
-                                  SizedBox(height: 16),
-
-                                  Text("AC Type", style: TextStyle(fontSize: 12, fontFamily: "Arimo", color: Colors.grey.shade600)),
-                                  SizedBox(height: 4),
-                                  Text(
-                                    rSelectedType ?? "—",
-                                    style: TextStyle(fontSize: 14, fontFamily: "Arimo", fontWeight: FontWeight.bold),
-                                  ),
-
-                                  SizedBox(height: 16),
-
-                                  Text("Payment Method", style: TextStyle(fontSize: 12, fontFamily: "Arimo", color: Colors.grey.shade600)),
-                                  SizedBox(height: 4),
-                                  Text(
-                                    rPaymentMethod ?? "—",
-                                    style: TextStyle(fontSize: 14, fontFamily: "Arimo", fontWeight: FontWeight.bold),
-                                  ),
-
-                                  SizedBox(height: 16),
-
-                                  SizedBox(height: 20),
-                                  Divider(),
-                                  SizedBox(height: 12),
-
-                                  Row(
-                                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                    children: [
-                                      Text("Repair Fee", style: TextStyle(fontSize: 15, fontFamily: "Changa One")),
-                                      Text( rSelectedProduct != null ? "₱${repairFee.toStringAsFixed(0)}" : "—",
-                                        style: TextStyle(fontSize: 20, fontFamily: "Changa One", color: Color(0xFF013B7A)),
-                                      ),
-                                    ],
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
+                ),
+              ],
             ),
           ),
         ),
       ),
-      ]
-      )
-      )
     );
   }
 }

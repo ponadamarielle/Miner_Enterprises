@@ -45,12 +45,15 @@ void _addTechnicianDialog() {
   showDialog(
     context: context,
     builder: (context) {
+      final screenWidth = MediaQuery.of(context).size.width;
+      final isDesktop = screenWidth >= 900;
+
       return AlertDialog(
         backgroundColor: Colors.white,
         title: Text("Add Technician", style: TextStyle(fontSize: 20, fontFamily: "Changa One")),
 
         content: SizedBox(
-          width: 350,
+          width: isDesktop ? 350 : screenWidth * 0.9,
           child: Form(
             key: formKey,
             child: Column(
@@ -232,6 +235,9 @@ void _editDialog(QueryDocumentSnapshot doc) {
   showDialog(
     context: context,
     builder: (context) {
+      final screenWidth = MediaQuery.of(context).size.width;
+      final isDesktop = screenWidth >= 900;
+
       TextEditingController nameController = TextEditingController(text: doc['name']);
       TextEditingController mobileNumController = TextEditingController(text: doc['mobileNumber']);
 
@@ -241,7 +247,7 @@ void _editDialog(QueryDocumentSnapshot doc) {
         ),
 
         content: SizedBox(
-          width: 350,
+          width: isDesktop ? 350 : screenWidth * 0.9,
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
@@ -364,18 +370,21 @@ void _deactivateDialog(String id) {
 
   @override
   Widget build(BuildContext context) {
+    final screenWidth = MediaQuery.of(context).size.width;
+    final isDesktop = screenWidth >= 900;
+
     return Scaffold(
       backgroundColor: Color(0xFFF8F8F8),
 
       body: Padding(
-        padding: EdgeInsets.symmetric(horizontal: 40, vertical: 50),
+        padding: EdgeInsets.symmetric(horizontal: isDesktop ? 40 : 16, vertical: isDesktop ? 50 : 20),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
 
             // add
             Row(
-              mainAxisAlignment: MainAxisAlignment.end,
+              mainAxisAlignment: isDesktop ? MainAxisAlignment.end : MainAxisAlignment.center,
               children: [
                 SizedBox(
                   width: 190,
@@ -391,8 +400,8 @@ void _deactivateDialog(String id) {
                       ),
                     ),
                     child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        SizedBox(width: 10),
                         Image.asset('assets/images/add.png', width: 17, height: 17),
 
                         SizedBox(width: 10),
@@ -415,17 +424,23 @@ void _deactivateDialog(String id) {
             SizedBox(height: 20),
 
             // table
-            DataTableTheme(
-              data: DataTableThemeData(
-                dividerThickness: 1,
-              ),
-
-              child: SingleChildScrollView(
-                scrollDirection: Axis.horizontal,
-                child: SizedBox(
-                  width: MediaQuery.of(context).size.width,
-
-                  child: _buildTechnicianTable(),
+            Expanded(
+              child: DataTableTheme(
+                data: DataTableThemeData(
+                  dividerThickness: 1,
+                ),
+              
+                child: SingleChildScrollView(
+                  scrollDirection: Axis.vertical,
+                  child: SingleChildScrollView(
+                    scrollDirection: Axis.horizontal,
+                    child: ConstrainedBox(
+                      constraints: BoxConstraints(
+                        minWidth: MediaQuery.of(context).size.width,
+                      ),
+                      child: _buildTechnicianTable(),
+                    ),
+                  ),
                 ),
               ),
             ),

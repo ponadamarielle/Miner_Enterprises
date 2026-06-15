@@ -23,23 +23,15 @@ class _LoginState extends State<Login> {
     final password = passwordController.text.trim();
 
     if (email.isEmpty && password.isEmpty) {
-      setState(() {
-        errorMessage = "Please enter email and password";
-      });
+      setState(() => errorMessage = "Please enter email and password");
       return;
     }
-
     if (email.isEmpty) {
-      setState(() {
-        errorMessage = "Please enter email";
-      });
+      setState(() => errorMessage = "Please enter email");
       return;
     }
-
     if (password.isEmpty) {
-      setState(() {
-        errorMessage = "Please enter password";
-      });
+      setState(() => errorMessage = "Please enter password");
       return;
     }
 
@@ -59,14 +51,10 @@ class _LoginState extends State<Login> {
       if (!mounted) return;
       Navigator.pushReplacement(
         context,
-        MaterialPageRoute(
-          builder: (context) => Admin(),
-        ),
+        MaterialPageRoute(builder: (context) => Admin()),
       );
-
     } on FirebaseAuthException catch (e) {
       String message;
-
       switch (e.code) {
         case 'user-not-found':
           message = "Email not found";
@@ -83,24 +71,29 @@ class _LoginState extends State<Login> {
         default:
           message = "Login failed. Please try again";
       }
-
       setState(() {
         errorMessage = message;
-        isLoading = false; 
+        isLoading = false;
       });
-
     } catch (e) {
       setState(() {
         errorMessage = "Unexpected error occurred";
-        isLoading = false; 
+        isLoading = false;
       });
-
       debugPrint("UNKNOWN ERROR: $e");
     }
   }
 
   @override
   Widget build(BuildContext context) {
+    final screenWidth = MediaQuery.of(context).size.width;
+    final isMobile = screenWidth < 600;
+    final cardWidth = isMobile ? screenWidth * 0.90 : 450.0;
+    final cardPadding = isMobile ? 28.0 : 60.0;
+    final logoSize = isMobile ? 36.0 : 50.0;
+    final titleFontSize = isMobile ? 22.0 : 30.0;
+    final subtitleFontSize = isMobile ? 12.0 : 13.0;
+
     return Scaffold(
       body: Stack(
         children: [
@@ -110,112 +103,137 @@ class _LoginState extends State<Login> {
               fit: BoxFit.cover,
             ),
           ),
-
           Center(
-            child: Container(
-              width: 450,
-              height: 500,
-              padding: EdgeInsets.all(60),
-              decoration: BoxDecoration(
-                color: Colors.white.withValues(alpha: 0.85),
-                borderRadius: BorderRadius.circular(15),
-              ),
-              child: Column(
-                children: [
-
-                  Row(
-                    children: [
-                      Image.asset('assets/images/logo.png', width: 50, height: 50),
-                      SizedBox(width: 15),
-                      Text.rich(
-                        TextSpan(
-                          children: [
-                            TextSpan(text: "Miner ", style: TextStyle(fontSize: 30, fontFamily: "Changa One", color: Color(0xFF013b7a))),
-                            TextSpan(text: "Enterprises", style: TextStyle(fontSize: 30, fontFamily: "Changa One", color: Color(0xFFdc342c)))
-                          ]
-                        )
-                      )
-                    ]
-                  ),
-
-                  SizedBox(height: 10),
-
-                  Text(
-                    "Login to your account",
-                    style: TextStyle(fontSize: 13, fontWeight: FontWeight.w500, fontFamily: "Arimo")
-                  ),
-
-                  SizedBox(height: 50),
-
-                  TextField(
-                    controller: emailController,
-                    decoration: InputDecoration(labelText: "Email", border: OutlineInputBorder()),
-                  ),
-
-                  SizedBox(height: 35),
-
-                  TextField(
-                    controller: passwordController,
-                    obscureText: _obscurePassword,
-                    decoration: InputDecoration(
-                      labelText: "Password",
-                      border: OutlineInputBorder(),
-                      suffixIcon: IconButton(
-                        icon: Icon(
-                          _obscurePassword ? Icons.visibility_off : Icons.visibility,
-                        ),
-                        onPressed: () {
-                          setState(() {
-                            _obscurePassword = !_obscurePassword;
-                          });
-                        },
-                      ),
-                    ),
-                  ),
-
-                  SizedBox(height: 20),
-
-                  if (errorMessage.isNotEmpty)
-                    Align(
-                      alignment: Alignment.centerLeft,
-                      child: Text(
-                        errorMessage,
-                        style: const TextStyle(
-                          color: Colors.red,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                    ),
-
-                  SizedBox(height: 20),
-
-                  ElevatedButton(
-                    onPressed: loginUser,
-                    style: ElevatedButton.styleFrom(
-                      elevation: 10,
-                      minimumSize: Size(double.infinity, 50),
-                      backgroundColor: Colors.white,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(10),
-                      ),
-                    ),
-                    child: isLoading
-                      ? SizedBox(
-                          height: 20,
-                          width: 20,
-                          child: CircularProgressIndicator(strokeWidth: 2),
-                        )
-                      : Text(
-                          "LOGIN",
-                          style: TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.w900,
-                            fontFamily: "Arimo",
-                            color: Color(0xFF013B7A),
+            child: SingleChildScrollView(
+              child: Container(
+                width: cardWidth,
+                padding: EdgeInsets.all(cardPadding),
+                decoration: BoxDecoration(
+                  color: Colors.white.withValues(alpha: 0.85),
+                  borderRadius: BorderRadius.circular(15),
+                ),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    // Logo + Title
+                    Row(
+                      children: [
+                        Image.asset('assets/images/logo.png',
+                            width: logoSize, height: logoSize),
+                        SizedBox(width: 12),
+                        Flexible(
+                          child: Text.rich(
+                            TextSpan(children: [
+                              TextSpan(
+                                text: "Miner ",
+                                style: TextStyle(
+                                  fontSize: titleFontSize,
+                                  fontFamily: "Changa One",
+                                  color: Color(0xFF013b7a),
+                                ),
+                              ),
+                              TextSpan(
+                                text: "Enterprises",
+                                style: TextStyle(
+                                  fontSize: titleFontSize,
+                                  fontFamily: "Changa One",
+                                  color: Color(0xFFdc342c),
+                                ),
+                              ),
+                            ]),
                           ),
                         ),
-                  ),
-                ],
+                      ],
+                    ),
+
+                    SizedBox(height: 10),
+
+                    Text(
+                      "Login to your account",
+                      style: TextStyle(
+                        fontSize: subtitleFontSize,
+                        fontWeight: FontWeight.w500,
+                        fontFamily: "Arimo",
+                      ),
+                    ),
+
+                    SizedBox(height: isMobile ? 30 : 50),
+
+                    TextField(
+                      controller: emailController,
+                      decoration: InputDecoration(
+                        labelText: "Email",
+                        border: OutlineInputBorder(),
+                      ),
+                    ),
+
+                    SizedBox(height: isMobile ? 20 : 35),
+
+                    TextField(
+                      controller: passwordController,
+                      obscureText: _obscurePassword,
+                      decoration: InputDecoration(
+                        labelText: "Password",
+                        border: OutlineInputBorder(),
+                        suffixIcon: IconButton(
+                          icon: Icon(
+                            _obscurePassword
+                                ? Icons.visibility_off
+                                : Icons.visibility,
+                          ),
+                          onPressed: () {
+                            setState(() {
+                              _obscurePassword = !_obscurePassword;
+                            });
+                          },
+                        ),
+                      ),
+                    ),
+
+                    SizedBox(height: 20),
+
+                    if (errorMessage.isNotEmpty)
+                      Align(
+                        alignment: Alignment.centerLeft,
+                        child: Text(
+                          errorMessage,
+                          style: const TextStyle(
+                            color: Colors.red,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ),
+
+                    SizedBox(height: 20),
+
+                    ElevatedButton(
+                      onPressed: loginUser,
+                      style: ElevatedButton.styleFrom(
+                        elevation: 10,
+                        minimumSize: Size(double.infinity, 50),
+                        backgroundColor: Colors.white,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                      ),
+                      child: isLoading
+                          ? SizedBox(
+                              height: 20,
+                              width: 20,
+                              child: CircularProgressIndicator(strokeWidth: 2),
+                            )
+                          : Text(
+                              "LOGIN",
+                              style: TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.w900,
+                                fontFamily: "Arimo",
+                                color: Color(0xFF013B7A),
+                              ),
+                            ),
+                    ),
+                  ],
+                ),
               ),
             ),
           ),

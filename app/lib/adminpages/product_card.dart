@@ -69,6 +69,9 @@ class ProductCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final screenWidth = MediaQuery.of(context).size.width;
+    final isDesktop = screenWidth >= 900;
+
     final bool isInStock = product.stockQuantity > 0;
     final bool isLowStock = product.stockQuantity <= 5;
 
@@ -87,7 +90,7 @@ class ProductCard extends StatelessWidget {
               ClipRRect(
                 borderRadius: BorderRadius.vertical(top: Radius.circular(12)),
                 child: SizedBox(
-                  height: 190,
+                  height: isDesktop ? 190 : 140,
                   width: double.infinity,
                   child: product.imageUrl.isNotEmpty
                       ? Image.network(
@@ -135,7 +138,7 @@ class ProductCard extends StatelessWidget {
           // content
           Expanded(
             child: Padding(
-              padding: EdgeInsets.fromLTRB(10, 8, 10, 8),
+              padding: EdgeInsets.fromLTRB(isDesktop ? 10 : 8, 8, isDesktop ? 10 : 8, 8),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 mainAxisSize: MainAxisSize.max,
@@ -214,7 +217,8 @@ class ProductCard extends StatelessWidget {
             decoration: BoxDecoration(
               border: Border(top: BorderSide(color: Colors.grey.shade100)),
             ),
-            padding: EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+            // Less padding on mobile so buttons don't get squished
+            padding: EdgeInsets.symmetric(horizontal: isDesktop ? 8 : 4, vertical: isDesktop ? 6 : 4),
             child: Row(
               children: [
                 // edit button
