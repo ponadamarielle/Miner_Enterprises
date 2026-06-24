@@ -203,9 +203,8 @@ class _ServiceRequestState extends State<ServiceRequest> {
             'serviceItems': serviceItems
           }),
         );
-        debugPrint("Approval email triggered successfully.");
       } catch (e) {
-        debugPrint("Failed to trigger approval email: $e");
+        // Email notification failed;
       }
     }
 
@@ -226,9 +225,8 @@ class _ServiceRequestState extends State<ServiceRequest> {
             'reason': targetEvent['cancelReason'] ?? '',
           }),
         );
-        debugPrint('Cancellation email triggered successfully.');
       } catch (e) {
-        debugPrint('Failed to trigger cancellation email: \$e');
+        // Email notification failed;
       }
     }
 
@@ -293,7 +291,7 @@ class _ServiceRequestState extends State<ServiceRequest> {
           }),
         );
       } catch (e) {
-        debugPrint("Failed to send feedback email: $e");
+        // Email notification failed;
       }
     }
 
