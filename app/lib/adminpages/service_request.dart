@@ -903,6 +903,32 @@ class _ServiceRequestState extends State<ServiceRequest> {
                       child: Row(
                         crossAxisAlignment: CrossAxisAlignment.center,
                         children: [
+                          Icon(Icons.air, color: Color(0xFF013B7A), size: 35),
+                          SizedBox(width: 15),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text("Product", style: TextStyle(fontSize: 12, fontFamily: "Arimo")),
+                                Text(
+                                  _selectedEvent?['productName'] ?? 'N/A',
+                                  style: TextStyle(fontFamily: "Arimo", fontSize: 12, fontWeight: FontWeight.bold),
+                                  softWrap: true,
+                                  maxLines: null,
+                                  overflow: TextOverflow.visible,
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    SizedBox(height: 10),
+                    Padding(
+                      padding: EdgeInsets.only(left: 10),
+                      child: Row(
+                        crossAxisAlignment: CrossAxisAlignment.center,
+                        children: [
                           Icon(Icons.engineering, color: Color(0xFF013B7A), size: 35),
                           SizedBox(width: 15),
                           Column(

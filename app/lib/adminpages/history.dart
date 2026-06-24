@@ -200,6 +200,7 @@ class _HistoryState extends State<History> {
                               DataColumn(label: Text("Customer Name")),
                               DataColumn(label: Text("Email")),
                               DataColumn(label: Text("Service Type")),
+                              DataColumn(label: Text("Product")),
                               DataColumn(label: Text("Technician")),
                               DataColumn(label: Text("Status")),
                               DataColumn(label: Text("Payment Method")),
@@ -210,38 +211,71 @@ class _HistoryState extends State<History> {
                             rows: filteredDocs.map((doc) {
                               return DataRow(
                                 cells: [
-                                  DataCell(Text(doc['name'] ?? '', style: TextStyle(fontSize: 15, fontFamily: "Arimo"))),
                                   DataCell(
                                     SizedBox(
-                                      width: 220,
+                                      width: 140,
+                                      child: Text(doc['name'] ?? '', style: TextStyle(fontSize: 15, fontFamily: "Arimo"), softWrap: true, maxLines: null, overflow: TextOverflow.visible),
+                                    ),
+                                  ),
+                                  DataCell(
+                                    SizedBox(
+                                      width: 240,
+                                      child: Text(doc['email'] ?? '', style: TextStyle(fontSize: 15, fontFamily: "Arimo"), softWrap: true, maxLines: null, overflow: TextOverflow.visible),
+                                    ),
+                                  ),
+                                  DataCell(
+                                    SizedBox(
+                                      width: 85,
+                                      child: Text(doc['serviceType'] ?? '', style: TextStyle(fontSize: 15, fontFamily: "Arimo"), softWrap: true, maxLines: null, overflow: TextOverflow.visible),
+                                    ),
+                                  ),
+                                  DataCell(
+                                    SizedBox(
+                                      width: 200,
+                                      child: Text(doc['productName'] ?? 'N/A', style: TextStyle(fontSize: 15, fontFamily: "Arimo"), softWrap: true, maxLines: null, overflow: TextOverflow.visible),
+                                    ),
+                                  ),
+                                  DataCell(
+                                    SizedBox(
+                                      width: 115,
+                                      child: Text(doc['technicianName'] ?? '', style: TextStyle(fontSize: 15, fontFamily: "Arimo"), softWrap: true, maxLines: null, overflow: TextOverflow.visible),
+                                    ),
+                                  ),
+                                  DataCell(
+                                    SizedBox(
+                                      width: 80,
                                       child: Text(
-                                        doc['email'] ?? '',
-                                        overflow: TextOverflow.ellipsis,
-                                        style: TextStyle(fontSize: 15, fontFamily: "Arimo"),
+                                        doc['status'] ?? '',
+                                        style: TextStyle(
+                                          color: doc['status'] == "Completed"
+                                              ? Colors.green
+                                              : Colors.orange,
+                                          fontSize: 15, fontFamily: "Arimo",
+                                        ),
+                                        softWrap: true,
+                                        maxLines: null,
+                                        overflow: TextOverflow.visible,
                                       ),
                                     ),
                                   ),
-                                  DataCell(Text(doc['serviceType'] ?? '', style: TextStyle(fontSize: 15, fontFamily: "Arimo"))),
-                                  DataCell(Text(doc['technicianName'] ?? '', style: TextStyle(fontSize: 15, fontFamily: "Arimo"))),
                                   DataCell(
-                                    Text(
-                                      doc['status'] ?? '',
-                                      style: TextStyle(
-                                        color: doc['status'] == "Completed"
-                                            ? Colors.green
-                                            : Colors.orange,
-                                        fontSize: 15, fontFamily: "Arimo",
+                                    SizedBox(
+                                      width: 130,
+                                      child: Text(doc['paymentMethod'] ?? '', style: TextStyle(fontSize: 15, fontFamily: "Arimo"), softWrap: true, maxLines: null, overflow: TextOverflow.visible),
+                                    ),
+                                  ),
+                                  DataCell(
+                                    SizedBox(
+                                      width: 70,
+                                      child: Text(
+                                        "₱${NumberFormat('#,##0').format((doc.data() as Map<String, dynamic>).containsKey('totalPrice') ? (doc['totalPrice'] as num) : 0)}",
+                                        style: TextStyle(fontSize: 15, fontFamily: "Arimo", fontWeight: FontWeight.bold, color: Color(0xFF013B7A)),
+                                        softWrap: true,
+                                        maxLines: null,
+                                        overflow: TextOverflow.visible,
                                       ),
                                     ),
                                   ),
-                                  DataCell(Text(doc['paymentMethod'] ?? '', style: TextStyle(fontSize: 15, fontFamily: "Arimo"))),
-
-                                  DataCell(
-                                    Text(
-                                      "₱${NumberFormat('#,##0').format((doc.data() as Map<String, dynamic>).containsKey('totalPrice') ? (doc['totalPrice'] as num) : 0)}",
-                                      style: TextStyle(fontSize: 15, fontFamily: "Arimo", fontWeight: FontWeight.bold, color: Color(0xFF013B7A))),
-                                  ),
-
                                   DataCell(
                                     SizedBox(
                                       width: 130,
@@ -250,10 +284,10 @@ class _HistoryState extends State<History> {
                                             ? DateFormat('MMM d, yyyy')
                                                 .format((doc['date'] as Timestamp).toDate())
                                             : '',
-                                        style: TextStyle(
-                                          fontSize: 15,
-                                          fontFamily: "Arimo",
-                                        ),
+                                        style: TextStyle(fontSize: 15, fontFamily: "Arimo"),
+                                        softWrap: true,
+                                        maxLines: null,
+                                        overflow: TextOverflow.visible,
                                       ),
                                     ),
                                   ),
