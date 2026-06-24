@@ -286,7 +286,6 @@ Future<Map<String, dynamic>> _fetchDocumentFromFirestore(String requestId) async
 void main() async {
   final router = Router();
 
-  // sends invoices & receipts
   router.post('/email/approve', (Request request) async {
     final payload = await request.readAsString();
     final data = jsonDecode(payload);
@@ -444,8 +443,6 @@ void main() async {
     return Response.ok('Approval email processed');
   });
 
-
-  // feedback
   router.post('/email/feedback', (Request request) async {
     final payload = await request.readAsString();
     final data = jsonDecode(payload);
@@ -569,7 +566,7 @@ void main() async {
     return Response.ok('Feedback email processed');
   });
 
-  // cancellation
+
   router.post('/email/cancel', (Request request) async {
     final payload = await request.readAsString();
     final data = jsonDecode(payload);

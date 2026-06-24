@@ -41,7 +41,6 @@ class _ServicesState extends State<Services> with WidgetsBindingObserver {
   final _installationFormKey = GlobalKey<FormState>();
   final _repairFormKey = GlobalKey<FormState>();
 
-  // installation
   final iNameController = TextEditingController();
   final iMobileController = TextEditingController();
   final iEmailController = TextEditingController();
@@ -58,7 +57,6 @@ class _ServicesState extends State<Services> with WidgetsBindingObserver {
   double installationFee = 0.0;
   double repairFee = 0.0;
 
-  // repair
   final rNameController = TextEditingController();
   final rMobileController = TextEditingController();
   final rEmailController = TextEditingController();
@@ -129,7 +127,6 @@ class _ServicesState extends State<Services> with WidgetsBindingObserver {
     });
   }
 
-  // customize request id
   Future<String> generateServiceRequestId() async {
     final counterRef = FirebaseFirestore.instance
         .collection('counters')
@@ -158,7 +155,6 @@ class _ServicesState extends State<Services> with WidgetsBindingObserver {
     });
   }
 
-  // auto assign
   Future<Map<String, dynamic>?> autoAssignTechnician(DateTime selectedDate, String selectedTime) async {
     final techSnapshot = await firestore
         .collection("technicians")
@@ -267,7 +263,6 @@ class _ServicesState extends State<Services> with WidgetsBindingObserver {
   }).toList();
 }
 
-  // reset
   Future<void> resetIfNewDay(DocumentSnapshot techDoc, DateTime today) async {
   final data = techDoc.data() as Map<String, dynamic>;
 
@@ -283,7 +278,6 @@ class _ServicesState extends State<Services> with WidgetsBindingObserver {
   }
 }
 
-  // submit installation
   Future<void> submitInstallationRequest() async {
 
   if (_installationFormKey.currentState!.validate()) {
@@ -367,7 +361,6 @@ class _ServicesState extends State<Services> with WidgetsBindingObserver {
   }
 }
 
-  // submit repair form
 Future<void> submitRepairRequest() async {
 
   if (_repairFormKey.currentState!.validate()) {
@@ -830,7 +823,6 @@ void clearRepairFields() {
           children: [
             Align(
               alignment: Alignment.topCenter,
-              // Wrapped in SingleChildScrollView so the cards can scroll on mobile
               child: SingleChildScrollView(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.center,
@@ -1013,7 +1005,6 @@ void clearRepairFields() {
           ),
           const SizedBox(height: 20),
 
-          // Name & Mobile
           _buildResponsiveRow(
             isDesktop,
             TextFormField(
@@ -1037,7 +1028,6 @@ void clearRepairFields() {
           ),
           const SizedBox(height: 10),
 
-          // Email
           TextFormField(
             controller: iEmailController,
             keyboardType: TextInputType.emailAddress,
@@ -1050,7 +1040,6 @@ void clearRepairFields() {
           ),
           const SizedBox(height: 10),
 
-          // AC Type & Product
           _buildResponsiveRow(
             isDesktop,
             DropdownButtonFormField2<String>(
@@ -1088,7 +1077,6 @@ void clearRepairFields() {
           ),
           const SizedBox(height: 10),
 
-          // Date & Time
           _buildResponsiveRow(
             isDesktop,
             TextFormField(
@@ -1120,7 +1108,6 @@ void clearRepairFields() {
           ),
           const SizedBox(height: 10),
 
-          // Address
           TextFormField(
             controller: iAddressController,
             decoration: const InputDecoration(labelText: "Complete Address", labelStyle: TextStyle(fontSize: 15, fontFamily: "Arimo"), border: OutlineInputBorder()),
@@ -1128,7 +1115,6 @@ void clearRepairFields() {
           ),
           const SizedBox(height: 10),
 
-          // Payment Method
           DropdownButtonFormField2<String>(
             value: iPaymentMethod,
             isExpanded: true,
@@ -1484,7 +1470,6 @@ void clearRepairFields() {
   }
 }
 
-//hover
 class HoverCard extends StatefulWidget {
   final Widget child;
 

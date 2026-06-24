@@ -9,7 +9,6 @@ import 'package:http/http.dart' as http;
 import 'package:intl/intl.dart';
 import 'package:url_launcher/url_launcher.dart';
 
-// product model
 class _Product {
   final String id;
   final String name;
@@ -172,7 +171,6 @@ class _ShopAcsState extends State<ShopAcs> {
 
             SizedBox(height: 40),
 
-            // product grid
             Expanded(
               child: StreamBuilder<QuerySnapshot>(
                 stream: _productsRef
@@ -246,7 +244,6 @@ class _ShopAcsState extends State<ShopAcs> {
   }
 }
 
-// product card
 class _ProductCard extends StatelessWidget {
   final _Product product;
   final VoidCallback onViewProduct;
@@ -306,7 +303,6 @@ class _ProductCard extends StatelessWidget {
                         )
                       : _placeholder(),
 
-                  // out ofstock
                   if (!inStock)
                     Container(
                       color: Colors.black.withValues(alpha: 0.35),
@@ -354,7 +350,6 @@ class _ProductCard extends StatelessWidget {
 
                   SizedBox(height: 10),
 
-                  // price + view button
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
@@ -392,7 +387,6 @@ class _ProductCard extends StatelessWidget {
       );
 }
 
-// product detail
 class _ProductDetailSheet extends StatefulWidget {
   final _Product product;
   final VoidCallback? onInquire;
@@ -1185,7 +1179,6 @@ class _InstallationFormDialogState extends State<_InstallationFormDialog> with W
           Center(child: Text("Installation", style: TextStyle(fontSize: 18, fontFamily: "Arimo", color: Color(0xFF013B7A), fontWeight: FontWeight.bold))),
           SizedBox(height: 20),
 
-          // Name and Mobile Row
           _buildResponsiveRow(
             isDesktop,
             TextFormField(
@@ -1230,7 +1223,6 @@ class _InstallationFormDialogState extends State<_InstallationFormDialog> with W
 
           SizedBox(height: 10),
 
-          // Email
           TextFormField(
             controller: iEmailController,
             keyboardType: TextInputType.emailAddress,
@@ -1248,7 +1240,6 @@ class _InstallationFormDialogState extends State<_InstallationFormDialog> with W
 
           SizedBox(height: 10),
 
-          // Product Selector
           DropdownButtonFormField2<String>(
             value: iSelectedProduct,
             isExpanded: true,
@@ -1282,7 +1273,6 @@ class _InstallationFormDialogState extends State<_InstallationFormDialog> with W
 
           SizedBox(height: 10),
 
-          // Date and Time Row
           _buildResponsiveRow(
             isDesktop,
             TextFormField(
@@ -1337,7 +1327,6 @@ class _InstallationFormDialogState extends State<_InstallationFormDialog> with W
 
           SizedBox(height: 10),
 
-          // Address
           TextFormField(
             controller: iAddressController,
             decoration: InputDecoration(
@@ -1353,7 +1342,6 @@ class _InstallationFormDialogState extends State<_InstallationFormDialog> with W
 
           SizedBox(height: 10),
 
-          // Payment Method
           DropdownButtonFormField2<String>(
             value: iPaymentMethod,
             isExpanded: true,
@@ -1387,7 +1375,6 @@ class _InstallationFormDialogState extends State<_InstallationFormDialog> with W
 
           SizedBox(height: 15),
 
-          // Submit Button
           SizedBox(
             width: double.maxFinite,
             height: 45,

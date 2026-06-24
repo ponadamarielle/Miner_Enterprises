@@ -46,8 +46,6 @@ class _LoginState extends State<Login> {
         password: password,
       );
 
-      debugPrint("Login successful");
-
       if (!mounted) return;
       Navigator.pushReplacement(
         context,

@@ -11,7 +11,6 @@ class Technicians extends StatefulWidget {
 
 class _TechniciansState extends State<Technicians> {
 
-  //customize id
 Future<String> generateTechId() async {
   final snapshot = await FirebaseFirestore.instance
     .collection('technicians')
@@ -22,7 +21,6 @@ Future<String> generateTechId() async {
     return "TECH${count.toString().padLeft(2, '0')}";
 }
 
-//save
 Future<void> _saveTechnician(String name, String mobile) async {
   String techId = await generateTechId();
 
@@ -36,7 +34,6 @@ Future<void> _saveTechnician(String name, String mobile) async {
   });
 }
 
-//add technician dialog
 void _addTechnicianDialog() {
   TextEditingController nameController = TextEditingController();
   TextEditingController mobileNumController = TextEditingController();
@@ -146,9 +143,7 @@ void _addTechnicianDialog() {
     },
   );
 }
-  
 
-//load table data
 Widget _buildTechnicianTable() {
   return StreamBuilder<QuerySnapshot>(
     stream: FirebaseFirestore.instance
@@ -230,7 +225,6 @@ Widget _buildTechnicianTable() {
   );
 }
 
-//edit dialog
 void _editDialog(QueryDocumentSnapshot doc) {
   showDialog(
     context: context,
@@ -323,7 +317,6 @@ void _editDialog(QueryDocumentSnapshot doc) {
   );
 }
 
-//deactivate dialog
 void _deactivateDialog(String id) {
   showDialog(
     context: context,
@@ -382,7 +375,6 @@ void _deactivateDialog(String id) {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
 
-            // add
             Row(
               mainAxisAlignment: isDesktop ? MainAxisAlignment.end : MainAxisAlignment.center,
               children: [
@@ -423,7 +415,6 @@ void _deactivateDialog(String id) {
 
             SizedBox(height: 20),
 
-            // table
             Expanded(
               child: DataTableTheme(
                 data: DataTableThemeData(

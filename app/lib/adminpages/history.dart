@@ -56,7 +56,6 @@ class _HistoryState extends State<History> {
       ),
     );
 
-    // Extracted Filter Box for reuse in responsive layout
     Widget filterBox = Container(
       width: isDesktop ? 200 : double.infinity,
       decoration: BoxDecoration(
@@ -134,7 +133,6 @@ class _HistoryState extends State<History> {
 
             SizedBox(height: 30),
 
-            // table
             DataTableTheme(
               data: DataTableThemeData(
                 dividerThickness: 1,
@@ -177,11 +175,9 @@ class _HistoryState extends State<History> {
                             final name = (doc['name'] ?? '').toString().toLowerCase();
                             final status = doc['status'] ?? '';
 
-                            // search condition
                             final matchesSearch =
                                 name.contains(searchQuery.toLowerCase());
 
-                            // filter condition
                             final matchesFilter =
                                 selectedFilter == "All" ||
                                 status == selectedFilter;

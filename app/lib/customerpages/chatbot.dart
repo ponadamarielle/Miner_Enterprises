@@ -402,7 +402,6 @@ class _ChatbotSheetState extends State<ChatbotSheet> {
       ),
       child: Column(
         children: [
-          // Header
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
             decoration: const BoxDecoration(
@@ -446,7 +445,6 @@ class _ChatbotSheetState extends State<ChatbotSheet> {
             ),
           ),
 
-          // Messages
           Expanded(
             child: ListView.builder(
               controller: _scrollController,
@@ -494,7 +492,6 @@ class _ChatbotSheetState extends State<ChatbotSheet> {
 
           const SizedBox(height: 8),
 
-          // Input row (always visible)
           Padding(
               padding: const EdgeInsets.fromLTRB(10, 0, 10, 12),
               child: Row(

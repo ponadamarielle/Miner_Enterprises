@@ -30,7 +30,6 @@ class _ProductsState extends State<Products> {
 
   String? selectedType;
 
-// firebase
 late final CollectionReference _productsRef;
 
 @override
@@ -38,7 +37,6 @@ void initState() {
   super.initState();
   _productsRef = FirebaseFirestore.instance.collection('products');
 }
-  // cloudinary 
   static const String _cloudName = 'dnx24vcvu';
   static const String _uploadPreset = 'products_preset';
 
@@ -104,7 +102,6 @@ Future<String?> _uploadImage(Uint8List imageBytes, String fileName) async {
     );
   }
 
-  // add product
   void _addProductDialog() {
     final formKey = GlobalKey<FormState>();
 
@@ -505,7 +502,6 @@ Future<String?> _uploadImage(Uint8List imageBytes, String fileName) async {
     );
   }
 
-  // edit product
   void _editProductDialog(Product product) {
     final formKey = GlobalKey<FormState>();
 
@@ -813,7 +809,6 @@ Future<String?> _uploadImage(Uint8List imageBytes, String fileName) async {
                             imageUrl = url;
                           }
 
-                          // save
                           await _productsRef.doc(product.id).update({
                             'name': productNameController.text.trim(),
                             'type': dialogType,
@@ -839,7 +834,6 @@ Future<String?> _uploadImage(Uint8List imageBytes, String fileName) async {
     );
   }
 
-  // confirm delete
   void _confirmDelete(Product product) {
     showDialog(
       context: context,
@@ -913,7 +907,6 @@ Future<String?> _uploadImage(Uint8List imageBytes, String fileName) async {
 
             SizedBox(height: 25),
 
-            // filter
             isDesktop 
               ? Row(
                   mainAxisAlignment: MainAxisAlignment.start,
@@ -996,7 +989,6 @@ Future<String?> _uploadImage(Uint8List imageBytes, String fileName) async {
 
             SizedBox(height: 20),
 
-            // product card
             Expanded(
               child: StreamBuilder<QuerySnapshot>(
                 stream: _productsRef.snapshots(),

@@ -108,8 +108,7 @@ class _FeedbackState extends State<Feedback> {
                 SizedBox(height: 5),
                 Text("Request: ${widget.requestId}", style: TextStyle(fontSize: 14, fontFamily: "Arimo", color: Colors.grey.shade600)),
                 SizedBox(height: 30),
-                
-                // star rating
+
                 Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: List.generate(5, (index) {

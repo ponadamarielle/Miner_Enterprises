@@ -4,7 +4,6 @@ import 'package:flutter/cupertino.dart';
 class AuthService {
   final FirebaseAuth _auth = FirebaseAuth.instance;
 
-  // LOGIN
   Future<User?> login(String email, String password) async {
     try {
       final result = await _auth.signInWithEmailAndPassword(
@@ -18,7 +17,6 @@ class AuthService {
     }
   }
 
-  // LOGOUT
   Future<void> logout() async {
     await _auth.signOut();
   }

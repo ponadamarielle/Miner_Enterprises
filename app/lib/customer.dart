@@ -51,7 +51,6 @@ class _CustomerState extends State<Customer> {
     );
   }
 
-  // Mobile drawer
   Widget _buildDrawer() {
     return Drawer(
       backgroundColor: Colors.white,

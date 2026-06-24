@@ -70,7 +70,6 @@ class _AdminState extends State<Admin> {
     );
   }
 
-  // Desktop horizontal nav item
   Widget _desktopNavItem(String text, int pageIndex) {
     bool isActive = _index == pageIndex;
     return TextButton(

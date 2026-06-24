@@ -1,7 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 
-// product model
 class Product {
   final String id;
   final String name;
@@ -54,7 +53,6 @@ class Product {
   }
 }
 
-// card
 class ProductCard extends StatelessWidget {
   final Product product;
   final VoidCallback onEdit;
@@ -109,7 +107,6 @@ class ProductCard extends StatelessWidget {
                 ),
               ),
 
-              // stock badge
               Positioned(
                 top: 8,
                 right: 8,
@@ -135,7 +132,6 @@ class ProductCard extends StatelessWidget {
             ],
           ),
 
-          // content
           Expanded(
             child: Padding(
               padding: EdgeInsets.fromLTRB(isDesktop ? 10 : 8, 8, isDesktop ? 10 : 8, 8),
@@ -155,7 +151,6 @@ class ProductCard extends StatelessWidget {
 
                   SizedBox(height: 2),
 
-                  // name
                   Text(
                     product.name,
                     style: TextStyle(
@@ -170,7 +165,6 @@ class ProductCard extends StatelessWidget {
 
                   SizedBox(height: 2),
 
-                  // description
                   Text(
                     product.description,
                     style: TextStyle(
@@ -212,16 +206,14 @@ class ProductCard extends StatelessWidget {
             ),
           ),
 
-          // edit & delete buttons
           Container(
             decoration: BoxDecoration(
               border: Border(top: BorderSide(color: Colors.grey.shade100)),
             ),
-            // Less padding on mobile so buttons don't get squished
+
             padding: EdgeInsets.symmetric(horizontal: isDesktop ? 8 : 4, vertical: isDesktop ? 6 : 4),
             child: Row(
               children: [
-                // edit button
                 Expanded(
                   child: GestureDetector(
                     onTap: onEdit,
@@ -253,7 +245,6 @@ class ProductCard extends StatelessWidget {
 
                 SizedBox(width: 4),
 
-                // delete button
                 Expanded(
                   child: GestureDetector(
                     onTap: onDelete,
