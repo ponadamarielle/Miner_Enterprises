@@ -1294,6 +1294,8 @@ class _InstallationFormDialogState extends State<_InstallationFormDialog> with W
                   initialDate: DateTime.now(),
                   firstDate: DateTime.now(),
                   lastDate: DateTime(2100),
+                  selectableDayPredicate: (day) =>
+                      day.weekday >= DateTime.tuesday && day.weekday <= DateTime.friday,
                 );
                 if (pickedDate != null) {
                   setState(() {

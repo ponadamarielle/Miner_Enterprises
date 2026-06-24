@@ -1085,7 +1085,14 @@ void clearRepairFields() {
               decoration: const InputDecoration(labelText: "Preferred Date", labelStyle: TextStyle(fontSize: 15, fontFamily: "Arimo"), border: OutlineInputBorder(), suffixIcon: Icon(Icons.calendar_today)),
               validator: (value) => (value == null || value.isEmpty) ? "Date is required" : null,
               onTap: () async {
-                DateTime? pickedDate = await showDatePicker(context: context, initialDate: DateTime.now(), firstDate: DateTime.now(), lastDate: DateTime(2100));
+                DateTime? pickedDate = await showDatePicker(
+                  context: context,
+                  initialDate: DateTime.now(),
+                  firstDate: DateTime.now(),
+                  lastDate: DateTime(2100),
+                  selectableDayPredicate: (day) =>
+                      day.weekday >= DateTime.tuesday && day.weekday <= DateTime.friday,
+                );
                 if (pickedDate != null) {
                   setState(() {
                     iDateController.text = "${pickedDate.month}/${pickedDate.day}/${pickedDate.year}";
@@ -1303,7 +1310,14 @@ void clearRepairFields() {
               decoration: const InputDecoration(labelText: "Preferred Date", labelStyle: TextStyle(fontSize: 15, fontFamily: "Arimo"), border: OutlineInputBorder(), suffixIcon: Icon(Icons.calendar_today)),
               validator: (value) => (value == null || value.isEmpty) ? "Date is required" : null,
               onTap: () async {
-                DateTime? pickedDate = await showDatePicker(context: context, initialDate: DateTime.now(), firstDate: DateTime.now(), lastDate: DateTime(2100));
+                DateTime? pickedDate = await showDatePicker(
+                  context: context,
+                  initialDate: DateTime.now(),
+                  firstDate: DateTime.now(),
+                  lastDate: DateTime(2100),
+                  selectableDayPredicate: (day) =>
+                      day.weekday >= DateTime.tuesday && day.weekday <= DateTime.friday,
+                );
                 if (pickedDate != null) {
                   setState(() {
                     rDateController.text = "${pickedDate.month}/${pickedDate.day}/${pickedDate.year}";
